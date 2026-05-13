@@ -1,6 +1,10 @@
 """
 db/models.py  —  SQLAlchemy ORM models for the Vendor Acquisition Engine
 All tables match the schema defined in the LeaseLoft spec exactly.
+
+Note: The PostGIS `geom` GEOGRAPHY column on the vendors table is NOT declared here
+because SQLAlchemy's postgresql dialect doesn't include GEOGRAPHY natively (it requires
+GeoAlchemy2). Instead, connection.py adds the column via raw ALTER TABLE after create_all().
 """
 
 import enum
@@ -13,7 +17,7 @@ from sqlalchemy import (
     DateTime, ARRAY, JSON, ForeignKey, UniqueConstraint, Index,
     SmallInteger, Enum as SAEnum, CheckConstraint, func
 )
-from sqlalchemy.dialects.postgresql import UUID, JSONB, GEOGRAPHY
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
@@ -78,6 +82,8 @@ class Vendor(Base):
     county           = Column(Text)
     lat              = Column(Numeric(10, 7))
     lng              = Column(Numeric(10, 7))
+    # geom GEOGRAPHY(POINT,4326) column is added via raw SQL in connection.py
+    # after create_all() — requires PostGIS extension
     usps_normalized_address = Column(Text)
     address_hash     = Column(Text)
     place_id         = Column(Text, unique=True)
