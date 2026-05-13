@@ -1,6 +1,5 @@
 """
 db/models.py  —  SQLAlchemy ORM models for the Vendor Acquisition Engine
-All tables match the schema defined in the LeaseLoft spec exactly.
 
 Note: The PostGIS `geom` GEOGRAPHY column on the vendors table is NOT declared here
 because SQLAlchemy's postgresql dialect doesn't include GEOGRAPHY natively (it requires
@@ -25,13 +24,13 @@ Base = declarative_base()
 
 
 class SourceNameEnum(str, enum.Enum):
-    google       = "google"
-    yelp         = "yelp"
-    angi         = "angi"
+    google        = "google"
+    yelp          = "yelp"
+    angi          = "angi"
     state_license = "state_license"
-    county_list  = "county_list"
-    manual       = "manual"
-    enrichment   = "enrichment"
+    county_list   = "county_list"
+    manual        = "manual"
+    enrichment    = "enrichment"
 
 
 class JobStatusEnum(str, enum.Enum):
@@ -82,8 +81,7 @@ class Vendor(Base):
     county           = Column(Text)
     lat              = Column(Numeric(10, 7))
     lng              = Column(Numeric(10, 7))
-    # geom GEOGRAPHY(POINT,4326) column is added via raw SQL in connection.py
-    # after create_all() — requires PostGIS extension
+    # geom GEOGRAPHY(POINT,4326) added via raw SQL in connection.py — requires PostGIS
     usps_normalized_address = Column(Text)
     address_hash     = Column(Text)
     place_id         = Column(Text, unique=True)
@@ -115,7 +113,13 @@ class Vendor(Base):
     updated_at       = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now(), nullable=False)
     last_validated_at = Column(DateTime(timezone=True))
 
-    sources          = relationship("VendorSource", back_populates="vendor", cascade="all, delete-orphan")
+    # foreign_keys specified explicitly because VendorSource has two FKs pointing to vendors
+    sources = relationship(
+        "VendorSource",
+        foreign_keys="VendorSource.vendor_id",
+        back_populates="vendor",
+        cascade="all, delete-orphan",
+    )
     scores           = relationship("VendorScore", back_populates="vendor", cascade="all, delete-orphan")
     licenses         = relationship("VendorLicense", back_populates="vendor", cascade="all, delete-orphan")
     review_summaries = relationship("VendorReviewSummary", back_populates="vendor", cascade="all, delete-orphan")
@@ -125,16 +129,25 @@ class VendorSource(Base):
     __tablename__ = "vendor_sources"
 
     source_id       = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    vendor_id       = Column(UUID(as_uuid=True), ForeignKey("vendors.vendor_id", ondelete="CASCADE"))
+    vendor_id       = Column(UUID(as_uuid=True), ForeignKey("vendors.vendor_id", ondelete="CASCADE"), nullable=False)
     source_name     = Column(SAEnum(SourceNameEnum, name="source_name_enum"), nullable=False)
     external_id     = Column(Text)
     raw_data        = Column(JSONB, nullable=False)
     ingested_at     = Column(DateTime(timezone=True), default=func.now(), nullable=False)
     is_merged       = Column(Boolean, default=False, nullable=False)
+    # merge_target_id is a second FK to vendors — foreign_keys=[vendor_id] below tells
+    # SQLAlchemy to use only vendor_id for the back-reference, not merge_target_id
     merge_target_id = Column(UUID(as_uuid=True), ForeignKey("vendors.vendor_id"), nullable=True)
-    vendor = relationship("Vendor", foreign_keys=[vendor_id], back_populates="sources")
 
-    __table_args__ = (UniqueConstraint("source_name", "external_id", name="uq_vendor_sources_source_external"),)
+    vendor = relationship(
+        "Vendor",
+        foreign_keys=[vendor_id],
+        back_populates="sources",
+    )
+
+    __table_args__ = (
+        UniqueConstraint("source_name", "external_id", name="uq_vendor_sources_source_external"),
+    )
 
 
 class VendorScore(Base):
@@ -154,6 +167,7 @@ class VendorScore(Base):
     scored_by_model_version = Column(Text)
     decay_adjustment       = Column(Numeric(4, 2))
     trigger_event          = Column(Text)
+
     vendor = relationship("Vendor", back_populates="scores")
 
 
@@ -176,9 +190,12 @@ class VendorLicense(Base):
     source_url         = Column(Text)
     last_verified_at   = Column(DateTime(timezone=True))
     created_at         = Column(DateTime(timezone=True), default=func.now(), nullable=False)
+
     vendor = relationship("Vendor", back_populates="licenses")
 
-    __table_args__ = (UniqueConstraint("state", "license_number", name="uq_vendor_licenses_state_number"),)
+    __table_args__ = (
+        UniqueConstraint("state", "license_number", name="uq_vendor_licenses_state_number"),
+    )
 
 
 class VendorReviewSummary(Base):
@@ -192,9 +209,12 @@ class VendorReviewSummary(Base):
     last_review_date  = Column(Date)
     sentiment_score   = Column(Numeric(4, 3))
     updated_at        = Column(DateTime(timezone=True), default=func.now(), nullable=False)
+
     vendor = relationship("Vendor", back_populates="review_summaries")
 
-    __table_args__ = (UniqueConstraint("vendor_id", "source", name="uq_reviews_vendor_source"),)
+    __table_args__ = (
+        UniqueConstraint("vendor_id", "source", name="uq_reviews_vendor_source"),
+    )
 
 
 class JobRun(Base):
@@ -222,15 +242,17 @@ class JobRun(Base):
 class DedupPair(Base):
     __tablename__ = "dedup_pairs"
 
-    pair_id      = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    vendor_id_a  = Column(UUID(as_uuid=True), ForeignKey("vendors.vendor_id"), nullable=False)
-    vendor_id_b  = Column(UUID(as_uuid=True), ForeignKey("vendors.vendor_id"), nullable=False)
-    match_score  = Column(Numeric(4, 3), nullable=False)
+    pair_id       = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    vendor_id_a   = Column(UUID(as_uuid=True), ForeignKey("vendors.vendor_id"), nullable=False)
+    vendor_id_b   = Column(UUID(as_uuid=True), ForeignKey("vendors.vendor_id"), nullable=False)
+    match_score   = Column(Numeric(4, 3), nullable=False)
     match_signals = Column(JSONB, nullable=False)
-    resolution   = Column(SAEnum(DedupResolutionEnum, name="dedup_resolution_enum"), default=DedupResolutionEnum.pending, nullable=False)
-    resolved_at  = Column(DateTime(timezone=True))
-    resolved_by  = Column(Text)
-    canonical_id = Column(UUID(as_uuid=True), ForeignKey("vendors.vendor_id"), nullable=True)
-    created_at   = Column(DateTime(timezone=True), default=func.now(), nullable=False)
+    resolution    = Column(SAEnum(DedupResolutionEnum, name="dedup_resolution_enum"), default=DedupResolutionEnum.pending, nullable=False)
+    resolved_at   = Column(DateTime(timezone=True))
+    resolved_by   = Column(Text)
+    canonical_id  = Column(UUID(as_uuid=True), ForeignKey("vendors.vendor_id"), nullable=True)
+    created_at    = Column(DateTime(timezone=True), default=func.now(), nullable=False)
 
-    __table_args__ = (UniqueConstraint("vendor_id_a", "vendor_id_b", name="uq_dedup_pairs"),)
+    __table_args__ = (
+        UniqueConstraint("vendor_id_a", "vendor_id_b", name="uq_dedup_pairs"),
+    )
