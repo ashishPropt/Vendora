@@ -638,6 +638,13 @@ function showDashboard() {
   showSection(activeSection || 'keys');
 }
 function showSection(name) {
+  // Ensure the dashboard container is visible (works from landing page too)
+  const dash = document.getElementById('view-dashboard');
+  if (dash && dash.classList.contains('hidden')) {
+    hide('view-landing'); hide('view-auth'); show('view-dashboard');
+    if (token) { hide('nav-auth-btns'); show('nav-user-btns'); }
+    else        { show('nav-auth-btns'); hide('nav-user-btns'); }
+  }
   activeSection = name;
   ['keys','tryit','docs'].forEach(s => {
     const panel = document.getElementById('panel-' + s);
@@ -871,7 +878,7 @@ function switchCodeTab(lang) {
     }
   });
 }
-function showAuth(tab)    { window._showAuth(tab); }  // re-exposed above as top-level fn
+// (showAuth defined above)
 function copyText(text, elId, successMsg, resetMsg) {
   const el = document.getElementById(elId);
   function done() { if (el) { el.textContent = successMsg; setTimeout(() => el.textContent = resetMsg, 2000); } }
