@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vendora — Vendor Onboarding</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+  .step-indicator { transition: all 0.3s; }
+  .fade-in { animation: fadeIn 0.25s ease-in; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  input:focus, select:focus { outline: none; box-shadow: 0 0 0 3px rgba(99,102,241,0.25); }
+</style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
+
+<!-- Header -->
+<header class="bg-white border-b border-gray-100 px-6 py-4 shadow-sm">
+  <div class="max-w-2xl mx-auto flex items-center gap-3">
+    <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+      <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+      </svg>
+    </div>
+    <div>
+      <div class="font-bold text-gray-900 leading-tight">Vendora</div>
+      <div class="text-xs text-gray-500">Vendor Partner Portal</div>
+    </div>
+  </div>
+</header>
+
+<main class="max-w-2xl mx-auto px-4 py-10">
+
+  <!-- Progress bar -->
+  <div class="mb-8">
+    <div class="flex items-center justify-between mb-3">
+      <span id="step-label" class="text-sm font-medium text-indigo-600">Step 1 of 3</span>
+      <span id="step-title-label" class="text-sm text-gray-500">Find your listing</span>
+    </div>
+    <div class="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+      <div id="progress-bar" class="h-full bg-indigo-600 rounded-full transition-all duration-500" style="width:33%"></div>
+    </div>
+  </div>
+
+  <!-- Card container -->
+  <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+
+    <!-- ── INVITE: Loading / error state (shown while fetching invite data) ── -->
+    <div id="invite-loading" class="hidden p-8 fade-in text-center space-y-4">
+      <svg class="w-10 h-10 animate-spin text-indigo-500 mx-auto" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+      </svg>
+      <p class="text-gray-500 text-sm">Loading your invitation…</p>
+    </div>
+
+    <div id="invite-error" class="hidden p-8 fade-in text-center space-y-4">
+      <div class="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto">
+        <svg class="w-7 h-7 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      <h2 class="text-xl font-bold text-gray-900">Invite link issue</h2>
+      <p id="invite-error-msg" class="text-gray-500 text-sm"></p>
+      <a href="/vendor-portal.html" class="inline-block text-indigo-600 text-sm hover:underline">Already have an account? Log in →</a>
+    </div>
+
+    <!-- ── STEP 1: Search ─────────────────────────────────────────────────── -->
+    <div id="step1" class="p-8 fade-in">
+      <h1 class="text-2xl font-bold text-gray-900 mb-1">Find your business</h1>
+      <p class="text-gray-500 text-sm mb-6">Search for your listing in the Vendora directory so you can claim and activate it.</p>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1.5">Business name <span class="text-red-500">*</span></label>
+          <input id="search-name" type="text" placeholder="e.g. Ace Plumbing &amp; Drain"
+            class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400"
+            autocomplete="organization" />
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">ZIP code</label>
+            <input id="search-zip" type="text" placeholder="e.g. 08701" maxlength="10"
+              class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1.5">State</label>
+            <select id="search-state" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-900 bg-white">
+              <option value="">Any state</option>
+              <option>AL</option><option>AK</option><option>AZ</option><option>AR</option>
+              <option>CA</option><option>CO</option><option>CT</option><option>DE</option>
+              <option>FL</option><option>GA</option><option>HI</option><option>ID</option>
+              <option>IL</option><option>IN</option><option>IA</option><option>KS</option>
+              <option>KY</option><option>LA</option><option>ME</option><option>MD</option>
+              <option>MA</option><option>MI</option><option>MN</option><option>MS</option>
+              <option>MO</option><option>MT</option><option>NE</option><option>NV</option>
+              <option>NH</option><option>NJ</option><option>NM</option><option>NY</option>
+              <option>NC</option><option>ND</option><option>OH</option><option>OK</option>
+              <option>OR</option><option>PA</option><option>RI</option><option>SC</option>
+              <option>SD</option><option>TN</option><option>TX</option><option>UT</option>
+              <option>VT</option><option>VA</option><option>WA</option><option>WV</option>
+              <option>WI</option><option>WY</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div id="search-error" class="hidden mt-3 text-sm text-red-600 bg-red-50 rounded-lg px-4 py-2.5"></div>
+
+      <button id="btn-search" onclick="doSearch()"
+        class="mt-6 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg px-4 py-2.5 text-sm transition-colors flex items-center justify-center gap-2">
+        <svg id="search-spinner" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+        Search directory
+      </button>
+
+      <!-- Results list -->
+      <div id="search-results" class="hidden mt-6 space-y-2"></div>
+      <div id="no-results" class="hidden mt-6 text-center py-6">
+        <div class="text-gray-400 text-sm">No listings found. Try a broader search or contact support.</div>
+      </div>
+    </div>
+
+    <!-- ── STEP 2: Confirm & create account ──────────────────────────────── -->
+    <div id="step2" class="hidden p-8 fade-in">
+      <h1 class="text-2xl font-bold text-gray-900 mb-1">Confirm your details</h1>
+      <p class="text-gray-500 text-sm mb-6">Review your listing, create your account, and add your payment info.</p>
+
+      <!-- Invite banner (visible only in invite flow) -->
+      <div id="invite-banner" class="hidden bg-indigo-50 border border-indigo-200 rounded-xl p-4 mb-4 text-sm"></div>
+
+      <!-- Selected vendor summary -->
+      <div id="vendor-summary" class="bg-indigo-50 border border-indigo-100 rounded-xl p-4 mb-6 text-sm"></div>
+
+      <div class="space-y-4">
+        <!-- Profile corrections -->
+        <div class="border-t border-gray-100 pt-4">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Correct any details</p>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Business name</label>
+              <input id="f-name" type="text" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-900" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Phone</label>
+              <input id="f-phone" type="tel" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-900" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Website</label>
+              <input id="f-website" type="url" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-900" />
+            </div>
+            <div class="col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Street address</label>
+              <input id="f-street" type="text" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-900" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">City</label>
+              <input id="f-city" type="text" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-900" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">ZIP</label>
+              <input id="f-zip" type="text" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-900" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Account creation -->
+        <div class="border-t border-gray-100 pt-4">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Create your account</p>
+          <div class="space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">First name</label>
+                <input id="f-first" type="text" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-900" />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">Last name</label>
+                <input id="f-last" type="text" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-900" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Email <span class="text-red-500">*</span></label>
+              <input id="f-email" type="email" placeholder="you@yourcompany.com"
+                class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Password <span class="text-red-500">*</span></label>
+              <input id="f-password" type="password" placeholder="At least 8 characters"
+                class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Confirm password <span class="text-red-500">*</span></label>
+              <input id="f-password2" type="password" placeholder="Re-enter password"
+                class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+        <!-- Bank / payment details -->
+        <div class="border-t border-gray-100 pt-4">
+          <div class="flex items-center gap-2 mb-1">
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Payment details</p>
+            <span class="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Optional — for job payouts</span>
+          </div>
+          <p class="text-xs text-gray-400 mb-3">Add your bank account so payments can be released to you automatically when a job is complete. You can also add this later in your profile.</p>
+          <div class="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3 text-xs text-amber-700 flex items-start gap-2">
+            <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+            </svg>
+            <span>Your banking details are stored securely and used only for job payment processing.</span>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Account holder name</label>
+              <input id="f-bank-holder" type="text" placeholder="Name as it appears on the account"
+                class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Bank name</label>
+              <input id="f-bank-name" type="text" placeholder="e.g. Chase, Wells Fargo"
+                class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Account type</label>
+              <select id="f-bank-type" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-900 bg-white">
+                <option value="checking">Checking</option>
+                <option value="savings">Savings</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Routing number</label>
+              <input id="f-bank-routing" type="text" placeholder="9-digit routing number" maxlength="9"
+                class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1.5">Account number</label>
+              <input id="f-bank-account" type="text" placeholder="Account number"
+                class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="onboard-error" class="hidden mt-3 text-sm text-red-600 bg-red-50 rounded-lg px-4 py-2.5"></div>
+
+      <div class="flex gap-3 mt-6">
+        <button onclick="goStep(1)"
+          class="flex-none px-5 py-2.5 border border-gray-300 text-sm font-medium text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+          ← Back
+        </button>
+        <button id="btn-onboard" onclick="doOnboard()"
+          class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg px-4 py-2.5 text-sm transition-colors flex items-center justify-center gap-2">
+          <svg id="onboard-spinner" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          Activate my listing
+        </button>
+      </div>
+    </div>
+
+    <!-- ── STEP 3: Success ───────────────────────────────────────────────── -->
+    <div id="step3" class="hidden p-8 text-center fade-in">
+      <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+      <h2 class="text-2xl font-bold text-gray-900 mb-2">You're all set!</h2>
+      <p class="text-gray-500 text-sm mb-1">Your Vendora partner listing is now <span class="text-green-600 font-medium">active</span>.</p>
+      <p class="text-gray-500 text-sm mb-8">You'll receive bid requests from property managers in your area. Log in to your vendor portal to manage bids and respond to landlords.</p>
+
+      <div id="success-info" class="bg-gray-50 rounded-xl border border-gray-200 p-4 text-left text-sm mb-6 space-y-1.5"></div>
+
+      <a id="portal-link" href="/vendor-portal.html"
+        class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg px-6 py-2.5 text-sm transition-colors">
+        Go to my vendor dashboard →
+      </a>
+    </div>
+
+  </div><!-- /card -->
+
+  <p class="text-center text-xs text-gray-400 mt-6">
+    Already have an account? <a href="/vendor-portal.html" class="text-indigo-600 hover:underline">Log in</a>
+    &nbsp;·&nbsp;
+    Need help? <a href="mailto:support@vendoraapp.com" class="text-indigo-600 hover:underline">Contact support</a>
+  </p>
+
+</main>
+
+<script>
+const BASE = '';   // same origin
+
+let selectedVendor = null;  // set when user picks a result in step 1
+let inviteToken    = null;  // set when arriving via ?invite=TOKEN
+
+// ── Step navigation ───────────────────────────────────────────────────────────
+function goStep(n) {
+  [1,2,3].forEach(i => {
+    const el = document.getElementById('step' + i);
+    el.classList.toggle('hidden', i !== n);
+    if (i === n) el.classList.add('fade-in');
+  });
+  const pct = { 1: '33%', 2: '66%', 3: '100%' }[n];
+  document.getElementById('progress-bar').style.width = pct;
+  document.getElementById('step-label').textContent = `Step ${n} of 3`;
+  document.getElementById('step-title-label').textContent =
+    inviteToken
+      ? { 1: 'Invitation', 2: 'Complete your registration', 3: 'Complete!' }[n]
+      : { 1: 'Find your listing', 2: 'Confirm & create account', 3: 'Complete!' }[n];
+  // In invite flow there's no step 1 to go back to
+  const backBtn = document.querySelector('#step2 button[onclick="goStep(1)"]');
+  if (backBtn) backBtn.classList.toggle('hidden', n === 2 && !!inviteToken);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ── Step 1: Search ────────────────────────────────────────────────────────────
+async function doSearch() {
+  const name  = document.getElementById('search-name').value.trim();
+  const zip   = document.getElementById('search-zip').value.trim();
+  const state = document.getElementById('search-state').value.trim();
+  const errEl = document.getElementById('search-error');
+
+  errEl.classList.add('hidden');
+  if (name.length < 2) {
+    errEl.textContent = 'Please enter at least 2 characters for the business name.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  const btn = document.getElementById('btn-search');
+  const spinner = document.getElementById('search-spinner');
+  btn.disabled = true;
+  spinner.classList.remove('hidden');
+
+  try {
+    const params = new URLSearchParams({ name });
+    if (zip)   params.set('zip', zip);
+    if (state) params.set('state', state);
+
+    const res = await fetch(`/vendor/find?${params}`);
+    const data = await res.json();
+
+    if (!res.ok) {
+      errEl.textContent = data.error || 'Search failed. Please try again.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+
+    renderResults(data.vendors || []);
+  } catch (e) {
+    errEl.textContent = 'Could not connect to the directory. Please try again.';
+    errEl.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    spinner.classList.add('hidden');
+  }
+}
+
+function renderResults(vendors) {
+  const listEl = document.getElementById('search-results');
+  const noneEl = document.getElementById('no-results');
+  listEl.innerHTML = '';
+
+  if (!vendors.length) {
+    listEl.classList.add('hidden');
+    noneEl.classList.remove('hidden');
+    return;
+  }
+  noneEl.classList.add('hidden');
+  listEl.classList.remove('hidden');
+
+  vendors.forEach(v => {
+    const alreadyOnboarded = v.is_onboarded;
+    const card = document.createElement('button');
+    card.className = `w-full text-left rounded-xl border px-4 py-3.5 transition-all hover:border-indigo-400 hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-400 ${alreadyOnboarded ? 'border-green-200 bg-green-50' : 'border-gray-200'}`;
+    card.innerHTML = `
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex-1 min-w-0">
+          <div class="font-semibold text-gray-900 text-sm truncate">${esc(v.canonical_name)}</div>
+          <div class="text-xs text-gray-500 mt-0.5">
+            ${[v.city, v.state, v.zip].filter(Boolean).join(', ')}
+            ${v.primary_phone ? ' · ' + esc(v.primary_phone) : ''}
+          </div>
+          ${v.category_name ? `<div class="text-xs text-indigo-600 mt-0.5">${esc(v.category_name)}</div>` : ''}
+        </div>
+        <div class="flex flex-col items-end gap-1 shrink-0">
+          ${alreadyOnboarded
+            ? '<span class="text-[10px] font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">Already active</span>'
+            : '<span class="text-[10px] font-semibold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Unclaimed</span>'
+          }
+          ${v.is_licensed ? '<span class="text-[10px] text-blue-600">✓ Licensed</span>' : ''}
+        </div>
+      </div>
+    `;
+    card.onclick = () => selectVendor(v, alreadyOnboarded);
+    listEl.appendChild(card);
+  });
+
+  // "Not listed?" help text at the bottom
+  const helpEl = document.createElement('p');
+  helpEl.className = 'text-xs text-gray-400 text-center pt-1';
+  helpEl.textContent = "Don't see your business? Try different search terms or contact support.";
+  listEl.appendChild(helpEl);
+}
+
+function selectVendor(v, alreadyOnboarded) {
+  if (alreadyOnboarded) {
+    const errEl = document.getElementById('search-error');
+    errEl.textContent = `"${v.canonical_name}" is already an active Vendora partner. If you need to access your account, use the login link below.`;
+    errEl.classList.remove('hidden');
+    return;
+  }
+  selectedVendor = v;
+  populateStep2(v);
+  goStep(2);
+}
+
+function populateStep2(v, isInvite) {
+  // Invite banner
+  const banner = document.getElementById('invite-banner');
+  if (banner) {
+    if (isInvite) {
+      banner.innerHTML =
+        '<div class="flex items-start gap-3">' +
+          '<svg class="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+            '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>' +
+          '</svg>' +
+          '<div>' +
+            '<p class="font-semibold text-indigo-900 text-sm">You\'ve been invited to join Vendora!</p>' +
+            '<p class="text-indigo-700 text-xs mt-0.5">Your business details have been pre-filled from our directory. Review and correct anything that\'s wrong, then create your account to activate your listing.</p>' +
+          '</div>' +
+        '</div>';
+      banner.classList.remove('hidden');
+    } else {
+      banner.classList.add('hidden');
+    }
+  }
+  // Summary card
+  const sum = document.getElementById('vendor-summary');
+  sum.innerHTML = `
+    <div class="font-semibold text-indigo-900 mb-0.5">${esc(v.canonical_name)}</div>
+    <div class="text-gray-600 text-xs space-y-0.5">
+      ${v.street_address ? `<div>${esc(v.street_address)}</div>` : ''}
+      <div>${[v.city, v.state, v.zip].filter(Boolean).join(', ')}</div>
+      ${v.primary_phone ? `<div>${esc(v.primary_phone)}</div>` : ''}
+      ${v.listing_email ? `<div>${esc(v.listing_email)}</div>` : ''}
+    </div>
+  `;
+  // Pre-fill editable fields
+  setValue('f-name',    v.canonical_name  || '');
+  setValue('f-phone',   v.primary_phone   || '');
+  setValue('f-website', v.website_url     || '');
+  setValue('f-street',  v.street_address  || '');
+  setValue('f-city',    v.city            || '');
+  setValue('f-zip',     v.zip             || '');
+  // Pre-fill email from listing if available
+  setValue('f-email',   v.listing_email   || '');
+}
+
+// ── Step 2: Onboard ───────────────────────────────────────────────────────────
+async function doOnboard() {
+  const errEl = document.getElementById('onboard-error');
+  errEl.classList.add('hidden');
+
+  const email    = document.getElementById('f-email').value.trim();
+  const password = document.getElementById('f-password').value;
+  const password2= document.getElementById('f-password2').value;
+
+  if (!email || !password) {
+    errEl.textContent = 'Email and password are required.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+  if (password.length < 8) {
+    errEl.textContent = 'Password must be at least 8 characters.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+  if (password !== password2) {
+    errEl.textContent = 'Passwords do not match.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+  if (!selectedVendor) {
+    errEl.textContent = 'No vendor selected. Please go back and choose a listing.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  // Bank validation — must run BEFORE spinner shows so early returns don't leave it stuck
+  const bankHolder  = document.getElementById('f-bank-holder') ? document.getElementById('f-bank-holder').value.trim() : '';
+  const bankName    = document.getElementById('f-bank-name')   ? document.getElementById('f-bank-name').value.trim()   : '';
+  const bankRouting = document.getElementById('f-bank-routing')? document.getElementById('f-bank-routing').value.trim(): '';
+  const bankAccount = document.getElementById('f-bank-account')? document.getElementById('f-bank-account').value.trim(): '';
+  const bankType    = document.getElementById('f-bank-type')   ? document.getElementById('f-bank-type').value           : 'checking';
+  const hasBankData = bankHolder || bankName || bankRouting || bankAccount;
+  if (hasBankData && (!bankHolder || !bankName || !bankRouting || !bankAccount)) {
+    errEl.textContent = 'Please complete all bank account fields, or leave them all blank.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+  if (bankRouting && bankRouting.length !== 9) {
+    errEl.textContent = 'Routing number must be exactly 9 digits.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  // All validation passed — now show spinner
+  const btn = document.getElementById('btn-onboard');
+  const spinner = document.getElementById('onboard-spinner');
+  btn.disabled = true;
+  spinner.classList.remove('hidden');
+
+  const body = {
+    vendor_id:      selectedVendor.vendor_id,
+    email,
+    password,
+    invite_token:   inviteToken || undefined,
+    first_name:     document.getElementById('f-first').value.trim() || undefined,
+    last_name:      document.getElementById('f-last').value.trim()  || undefined,
+    canonical_name: document.getElementById('f-name').value.trim()  || undefined,
+    primary_phone:  document.getElementById('f-phone').value.trim() || undefined,
+    website_url:    document.getElementById('f-website').value.trim() || undefined,
+    street_address: document.getElementById('f-street').value.trim() || undefined,
+    city:           document.getElementById('f-city').value.trim()  || undefined,
+    zip:            document.getElementById('f-zip').value.trim()   || undefined,
+  };
+  // Add bank details if provided
+  if (hasBankData && bankHolder && bankName && bankRouting && bankAccount) {
+    body.bank_account_holder = bankHolder;
+    body.bank_name           = bankName;
+    body.bank_account_type   = bankType;
+    body.bank_routing_number = bankRouting;
+    body.bank_account_number = bankAccount;
+  }
+  // Remove undefined keys to keep payload clean
+  Object.keys(body).forEach(k => body[k] === undefined && delete body[k]);
+
+  try {
+    const res = await fetch('/vendor/onboard', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      errEl.textContent = data.error || 'Onboarding failed. Please try again.';
+      errEl.classList.remove('hidden');
+      return;
+    }
+
+    // Save JWT for portal redirect
+    if (data.token) localStorage.setItem('vendora_vendor_token', data.token);
+
+    showSuccess(data);
+    goStep(3);
+  } catch (e) {
+    errEl.textContent = 'Could not connect to the server. Please try again.';
+    errEl.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    spinner.classList.add('hidden');
+  }
+}
+
+function showSuccess(data) {
+  const u = data.user || {};
+  const name = [u.first_name, u.last_name].filter(Boolean).join(' ') || u.email || '';
+  const bankHolder = document.getElementById('f-bank-holder') ? document.getElementById('f-bank-holder').value.trim() : '';
+  const infoEl = document.getElementById('success-info');
+  infoEl.innerHTML = `
+    <div class="flex justify-between"><span class="text-gray-500">Account</span><span class="font-medium text-gray-900">${esc(u.email || '')}</span></div>
+    ${name ? `<div class="flex justify-between"><span class="text-gray-500">Name</span><span class="font-medium text-gray-900">${esc(name)}</span></div>` : ''}
+    <div class="flex justify-between"><span class="text-gray-500">Business</span><span class="font-medium text-gray-900">${esc(selectedVendor?.canonical_name || '')}</span></div>
+    <div class="flex justify-between"><span class="text-gray-500">Status</span><span class="text-green-600 font-medium">Active partner ✓</span></div>
+    ${bankHolder ? '<div class="flex justify-between"><span class="text-gray-500">Payment</span><span class="text-green-600 font-medium">Bank account saved ✓</span></div>' : '<div class="flex justify-between"><span class="text-gray-500">Payment</span><span class="text-amber-600 font-medium">Add bank account in profile</span></div>'}
+  `;
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function setValue(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.value = val;
+}
+
+function esc(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+}
+
+
+// ── Invite flow ───────────────────────────────────────────────────────────────
+function showInviteError(msg) {
+  document.getElementById('invite-loading').classList.add('hidden');
+  document.getElementById('invite-error-msg').textContent = msg;
+  document.getElementById('invite-error').classList.remove('hidden');
+}
+
+async function initInviteFlow() {
+  const params = new URLSearchParams(window.location.search);
+  const token  = params.get('invite');
+  if (!token) return;  // Normal self-serve flow — do nothing
+
+  inviteToken = token;
+
+  // Immediately hide step 1 and show loader
+  document.getElementById('step1').classList.add('hidden');
+  document.getElementById('invite-loading').classList.remove('hidden');
+  // Update progress label
+  document.getElementById('step-label').textContent      = 'Loading invitation…';
+  document.getElementById('step-title-label').textContent = 'Invitation';
+
+  try {
+    const res  = await fetch('/v3/vendor-invite/' + token);
+    const data = await res.json();
+
+    if (!res.ok) {
+      showInviteError(data.error || 'This invite link is not valid.');
+      return;
+    }
+
+    // Map the API response to the selectedVendor shape
+    selectedVendor = {
+      vendor_id:     data.vendor_id,
+      canonical_name: data.canonical_name,
+      primary_phone:  data.primary_phone   || '',
+      listing_email:  data.listing_email   || '',
+      website_url:    data.website_url     || '',
+      street_address: data.street_address  || '',
+      city:           data.city            || '',
+      state:          data.state           || '',
+      zip:            data.zip             || '',
+    };
+
+    document.getElementById('invite-loading').classList.add('hidden');
+    populateStep2(selectedVendor, /* isInvite= */ true);
+    goStep(2);  // Back button will be hidden via goStep patch above
+  } catch (e) {
+    showInviteError('Could not load your invitation. Please check your link or contact support.');
+  }
+}
+
+initInviteFlow();
+
+// Allow pressing Enter in the search name field to trigger search
+document.getElementById('search-name').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doSearch();
+});
+</script>
+</body>
+</html>

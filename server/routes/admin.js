@@ -187,50 +187,19 @@ router.post('/call-vendor', requireAdminJwt, async (req, res) => {
       error: `Cannot parse phone "${vendor.primary_phone}" into a dialable number. Update it in the vendor record first.`,
     });
 
+    // Use the pre-configured Vapi assistant, override only the dynamic per-vendor fields
     const vapiPayload = {
+      assistantId:   '63ff5b64-4ea9-4e11-98e5-fdd8efb085c2',
       phoneNumberId: VAPI_PHONE_ID,
-      customer: { number: e164, name: vendor.canonical_name },
-      assistant: {
-        name: 'Alex — Vendora Outreach',
-        transcriber: { provider: 'deepgram', model: 'nova-2', language: 'en-US' },
+      customer:      { number: e164, name: vendor.canonical_name },
+      assistantOverrides: {
+        // Inject vendor-specific context into the system prompt
         model: {
-          provider: 'anthropic',
-          model:    'claude-3-5-haiku-20241022',
           messages: [{ role: 'system', content: buildSystemPrompt(vendor) }],
-          maxTokens:   300,
-          temperature: 0.7,
         },
-        voice: {
-          provider:        '11labs',
-          voiceId:         VOICE_ID,
-          stability:       0.5,
-          similarityBoost: 0.75,
-          style:           0.35,
-          useSpeakerBoost: true,
-        },
+        // Personalised opening line for this vendor
         firstMessage: `Hi, is this ${vendor.canonical_name}? Great — my name's Alex, I'm calling from Vendora. We help connect ${vendor.category_display_name || 'service'} businesses with property managers who need work in the ${vendor.city || 'local'} area. Do you have just a minute?`,
-        endCallMessage: 'Thanks so much for your time — have a wonderful day! Goodbye.',
-        recordingEnabled:          true,
-        fillerInjectionEnabled:    true,
-        backgroundDenoisingEnabled: true,
-        analysisPlan: {
-          summaryPrompt: `Summarize this vendor outreach call for ${vendor.canonical_name} in 2–3 sentences, focusing on their interest level and any important things they said.`,
-          structuredDataPrompt: 'Based on the full conversation, classify the outcome and capture key details.',
-          structuredDataSchema: {
-            type: 'object',
-            properties: {
-              outcome: {
-                type: 'string',
-                enum: ['INTERESTED', 'CALLBACK', 'NOT_NOW', 'NO_ANSWER', 'FAILED'],
-                description: 'INTERESTED=wants to join; CALLBACK=wants to be called again; NOT_NOW=politely declined; NO_ANSWER=voicemail or no pickup; FAILED=technical error',
-              },
-              notes:        { type: 'string', description: 'Key points or quotes from the conversation' },
-              callbackTime: { type: 'string', description: 'Preferred callback time if CALLBACK, otherwise null' },
-              contactInfo:  { type: 'string', description: 'Email or phone the vendor gave for the invite link, if any' },
-            },
-            required: ['outcome'],
-          },
-        },
+        // Webhook back to this server
         serverUrl:       `${PUBLIC_URL}/admin/call-outcome`,
         serverUrlSecret: WH_SECRET,
       },
