@@ -40,6 +40,8 @@
     <span class="flex-1"></span>
     <button id="nav-docs" onclick="showSection('docs')"
       class="text-sm text-gray-600 hover:text-blue-700 font-medium">Documentation</button>
+    <button id="nav-playground" onclick="showSection('tryit')"
+      class="text-sm text-gray-600 hover:text-blue-700 font-medium">Playground</button>
     <div id="nav-auth-btns" class="flex gap-2">
       <button onclick="showAuth('login')"
         class="text-sm text-gray-600 hover:text-blue-700 font-medium px-3 py-1.5">Sign in</button>
@@ -289,60 +291,145 @@
 
       <!-- ── Try it panel ── -->
       <div id="panel-tryit" class="hidden">
-        <h1 class="text-xl font-bold text-gray-900 mb-1">Try the API</h1>
-        <p class="text-gray-500 text-sm mb-6">Search vendors without writing any code</p>
+        <h1 class="text-xl font-bold text-gray-900 mb-1">API Playground</h1>
+        <p class="text-gray-500 text-sm mb-6">Test your API key live — no code needed</p>
 
-        <div class="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
-          <div class="grid md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Address <span class="text-red-500">*</span></label>
-              <input id="try-address" type="text" placeholder="e.g. Newark NJ or 07102 or 123 Main St"
+        <!-- API Key -->
+        <div class="bg-white rounded-2xl border border-gray-200 p-5 mb-4">
+          <label class="block text-sm font-semibold text-gray-700 mb-2">
+            API Key <span class="text-red-500">*</span>
+          </label>
+          <div class="flex gap-2">
+            <input id="try-apikey" type="text"
+              placeholder="vnd_your_api_key_here"
+              oninput="updateCurlPreview()"
+              class="flex-1 border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50"/>
+            <button onclick="pasteKey()"
+              class="shrink-0 text-sm border border-gray-200 px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+              </svg>
+              Paste
+            </button>
+          </div>
+          <p class="text-xs text-gray-400 mt-1.5">
+            Your key is sent directly to the Vendora API — it is never logged or stored by this page.
+            <span id="key-source-hint" class="text-blue-600 font-medium"></span>
+          </p>
+        </div>
+
+        <!-- Parameters -->
+        <div class="bg-white rounded-2xl border border-gray-200 p-5 mb-4">
+          <h2 class="text-sm font-semibold text-gray-700 mb-4">Search Parameters</h2>
+          <div class="grid md:grid-cols-2 gap-4 mb-5">
+            <div class="md:col-span-2">
+              <label class="block text-xs font-medium text-gray-500 mb-1">
+                Address <span class="text-red-500">*</span>
+                <span class="text-gray-400 font-normal ml-1">— any fragment: street, city, zip, partial address</span>
+              </label>
+              <input id="try-address" type="text"
+                placeholder="e.g.  Newark NJ  ·  07102  ·  123 Main St Trenton"
+                oninput="updateCurlPreview()"
                 class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Radius (miles)</label>
+              <label class="block text-xs font-medium text-gray-500 mb-1">Radius (miles)</label>
               <input id="try-radius" type="number" value="25" min="1" max="200"
+                oninput="updateCurlPreview()"
                 class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Keyword</label>
-              <input id="try-q" type="text" placeholder="e.g. plumber, hvac, roofing"
+              <label class="block text-xs font-medium text-gray-500 mb-1">Results per page</label>
+              <input id="try-limit" type="number" value="10" min="1" max="50"
+                oninput="updateCurlPreview()"
                 class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 mb-1">Category code</label>
-              <input id="try-category" type="text" placeholder="e.g. PLB or PLB.GEN"
+              <label class="block text-xs font-medium text-gray-500 mb-1">Keyword filter</label>
+              <input id="try-q" type="text" placeholder="e.g. plumber, hvac, roof"
+                oninput="updateCurlPreview()"
                 class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1">Category code</label>
+              <select id="try-category" onchange="updateCurlPreview()"
+                class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                <option value="">All categories</option>
+                <option value="PLB">PLB — Plumbing</option>
+                <option value="ELC">ELC — Electrical</option>
+                <option value="HVC">HVC — HVAC</option>
+                <option value="GCT">GCT — General Contractor</option>
+                <option value="HND">HND — Handyman</option>
+                <option value="CLN">CLN — Cleaning</option>
+                <option value="LND">LND — Landscaping</option>
+                <option value="ROF">ROF — Roofing</option>
+                <option value="PNT">PNT — Painting</option>
+                <option value="APP">APP — Appliances</option>
+                <option value="DMP">DMP — Dumpster</option>
+                <option value="FLR">FLR — Flooring</option>
+                <option value="JNK">JNK — Junk Removal</option>
+                <option value="LCK">LCK — Locksmith</option>
+                <option value="PST">PST — Pest Control</option>
+              </select>
             </div>
           </div>
+
+          <!-- Live curl preview -->
+          <div class="mb-5">
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Generated request</span>
+              <button onclick="copyCurlCmd()" id="curl-copy-btn"
+                class="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3"/>
+                </svg>
+                Copy
+              </button>
+            </div>
+            <pre id="curl-preview" class="code text-xs leading-relaxed whitespace-pre-wrap break-all">curl -X GET "http://45.77.79.14/v2/vendors?address=...&radius=25" \
+  -H "Authorization: Bearer vnd_your_key"</pre>
+          </div>
+
           <div class="flex items-center gap-3">
-            <button onclick="doTryApi()"
-              class="bg-blue-600 text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-blue-700 flex items-center gap-2 text-sm">
+            <button onclick="doTryApi()" id="try-run-btn"
+              class="bg-blue-600 text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-blue-700 flex items-center gap-2 text-sm">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
-              Run
+              Send Request
             </button>
             <span id="try-status" class="text-sm text-gray-400"></span>
           </div>
         </div>
 
-        <div id="try-results" class="hidden">
-          <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-            <div class="border-b border-gray-100 px-6 py-3 flex items-center justify-between">
-              <span id="try-result-count" class="text-sm font-medium text-gray-700"></span>
-              <button onclick="document.getElementById('try-json').classList.toggle('hidden')"
-                class="text-xs text-blue-600 hover:underline">Toggle JSON</button>
-            </div>
-            <div id="try-json" class="hidden border-b border-gray-100">
-              <pre id="try-json-pre" class="code text-xs p-4 max-h-64 overflow-auto rounded-none"></pre>
-            </div>
-            <div id="try-vendor-grid" class="divide-y divide-gray-50"></div>
+        <!-- Results -->
+        <div id="try-results" class="hidden space-y-3">
+
+          <!-- Summary bar -->
+          <div class="bg-white rounded-2xl border border-gray-200 px-5 py-3 flex items-center justify-between">
+            <span id="try-result-count" class="text-sm font-medium text-gray-700"></span>
+            <button onclick="document.getElementById('try-json-wrap').classList.toggle('hidden')"
+              class="text-xs text-blue-600 hover:underline font-medium">Toggle raw JSON</button>
           </div>
+
+          <!-- Raw JSON -->
+          <div id="try-json-wrap" class="hidden bg-white rounded-2xl border border-gray-200 overflow-hidden">
+            <pre id="try-json-pre" class="code text-xs p-5 max-h-72 overflow-auto rounded-none"></pre>
+          </div>
+
+          <!-- Vendor cards -->
+          <div id="try-vendor-grid" class="space-y-3"></div>
+
+          <!-- Pagination hint -->
+          <p id="try-page-hint" class="hidden text-center text-xs text-gray-400 pb-2"></p>
         </div>
       </div>
 
+      <!-- ── Documentation panel ── -->
       <!-- ── Documentation panel ── -->
       <div id="panel-docs" class="hidden">
         <h1 class="text-xl font-bold text-gray-900 mb-6">API Reference</h1>
@@ -656,7 +743,17 @@ function showSection(name) {
       btn.classList.toggle('text-gray-600', s !== name);
     }
   });
-  if (name === 'keys') loadKeys();
+  if (name === 'keys')   loadKeys();
+  if (name === 'tryit') {
+    // Pre-fill API key from session if the field is empty
+    const keyField = document.getElementById('try-apikey');
+    if (keyField && !keyField.value && token) {
+      keyField.placeholder = 'Key from your session (enter manually for external testing)';
+      const hint = document.getElementById('key-source-hint');
+      if (hint) hint.textContent = 'Using your current session token.';
+    }
+    updateCurlPreview();
+  }
 }
 
 // ── Auth ─────────────────────────────────────────────────────────────────────
@@ -785,63 +882,179 @@ async function revokeKey(id) {
   loadKeys();
 }
 
-// ── Try the API ───────────────────────────────────────────────────────────────
+// ── Playground ───────────────────────────────────────────────────────────────
+function getPlayKey() {
+  const field = document.getElementById('try-apikey');
+  return (field && field.value.trim()) || token || '';
+}
+
+function updateCurlPreview() {
+  const address  = (document.getElementById('try-address')?.value  || '').trim();
+  const radius   =  document.getElementById('try-radius')?.value   || '25';
+  const q        = (document.getElementById('try-q')?.value        || '').trim();
+  const category = (document.getElementById('try-category')?.value || '').trim();
+  const limit    =  document.getElementById('try-limit')?.value    || '10';
+  const key      = getPlayKey() || 'vnd_your_api_key';
+
+  const params = new URLSearchParams({ radius, limit });
+  if (address)  params.set('address',  address);
+  if (q)        params.set('q',        q);
+  if (category) params.set('category', category);
+
+  const url = `http://45.77.79.14/v2/vendors?${params}`;
+  const preview = document.getElementById('curl-preview');
+  if (preview) {
+    preview.textContent =
+      `curl -X GET "${url}" \\\n  -H "Authorization: Bearer ${key}"`;
+  }
+}
+
+function copyCurlCmd() {
+  const pre = document.getElementById('curl-preview');
+  if (!pre) return;
+  copyText(pre.textContent, 'curl-copy-btn', 'Copied!', 'Copy');
+}
+
+async function pasteKey() {
+  try {
+    const txt = await navigator.clipboard.readText();
+    const f = document.getElementById('try-apikey');
+    if (f && txt.startsWith('vnd_')) { f.value = txt.trim(); updateCurlPreview(); }
+  } catch { /* clipboard read requires user gesture in some browsers */ }
+}
+
+function tierClass(t) {
+  const m = { A:'badge-a', B:'badge-b', C:'badge-c', D:'badge-d', F:'badge-f' };
+  return m[(t||'').toUpperCase()] || 'bg-gray-100 text-gray-600';
+}
+
 async function doTryApi() {
   const address = document.getElementById('try-address').value.trim();
   if (!address) { alert('Please enter an address'); return; }
+
+  const apiKey = getPlayKey();
+  if (!apiKey) { alert('Please enter your API key'); return; }
+
   const radius   = document.getElementById('try-radius').value  || 25;
+  const limit    = document.getElementById('try-limit').value   || 10;
   const q        = document.getElementById('try-q').value.trim();
   const category = document.getElementById('try-category').value.trim();
 
+  const btn = document.getElementById('try-run-btn');
   const status = document.getElementById('try-status');
-  status.textContent = 'Searching…';
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner mr-2"></div> Searching…';
+  status.textContent = '';
   document.getElementById('try-results').classList.add('hidden');
 
-  const params = new URLSearchParams({ address, radius, limit: 10 });
+  const params = new URLSearchParams({ address, radius, limit });
   if (q)        params.set('q', q);
   if (category) params.set('category', category);
 
   try {
-    const t = Date.now();
+    const t0  = Date.now();
     const res = await fetch('/v2/vendors?' + params, {
-      headers: token ? { 'Authorization': 'Bearer ' + token } : {},
+      headers: { 'Authorization': 'Bearer ' + apiKey },
     });
-    const ms = Date.now() - t;
+    const ms   = Date.now() - t0;
     const data = await res.json();
 
     if (!res.ok || data.error) {
-      status.textContent = 'Error: ' + (data.error || res.statusText);
+      status.innerHTML = `<span class="text-red-500">⚠ ${data.error || res.statusText}</span>`;
       return;
     }
 
+    const center = data.search_center?.formatted_address || address;
     status.textContent = `${data.total} vendors · ${ms}ms`;
-    document.getElementById('try-result-count').textContent =
-      `Showing ${data.vendors.length} of ${data.total} vendors within ${data.radius_miles} miles of "${data.search_center?.formatted_address || address}"`;
+
+    document.getElementById('try-result-count').innerHTML =
+      `<strong>${data.vendors.length}</strong> of <strong>${data.total}</strong> vendors ` +
+      `within <strong>${data.radius_miles} mi</strong> of ` +
+      `<span class="text-blue-700">${esc(center)}</span>`;
+
     document.getElementById('try-json-pre').textContent = JSON.stringify(data, null, 2);
+
+    const hint = document.getElementById('try-page-hint');
+    if (data.total > data.vendors.length) {
+      hint.textContent = `Showing page 1 of ${Math.ceil(data.total/data.limit)}. Use the page= parameter to paginate.`;
+      hint.classList.remove('hidden');
+    } else { hint.classList.add('hidden'); }
 
     const grid = document.getElementById('try-vendor-grid');
     if (!data.vendors.length) {
-      grid.innerHTML = '<p class="text-gray-400 text-sm text-center py-8">No vendors found in this area.</p>';
+      grid.innerHTML = `<div class="bg-white rounded-2xl border border-gray-200 py-12 text-center">
+        <p class="text-gray-400">No vendors found in this area for the given filters.</p>
+        <p class="text-gray-400 text-sm mt-1">Try increasing the radius or removing the keyword/category filter.</p>
+      </div>`;
     } else {
-      grid.innerHTML = data.vendors.map(v => `
-        <div class="flex items-center gap-4 px-6 py-4">
-          <div class="flex-1 min-w-0">
-            <p class="font-semibold text-gray-900 text-sm truncate">${esc(v.canonical_name)}</p>
-            <p class="text-xs text-gray-400 mt-0.5">${esc(v.city || '')}, ${esc(v.state || '')} · ${esc(v.category_display_name || '')}</p>
+      grid.innerHTML = data.vendors.map((v, i) => `
+        <div class="bg-white rounded-2xl border border-gray-200 p-5 hover:border-blue-200 transition-colors">
+          <div class="flex items-start justify-between gap-4 mb-3">
+            <div class="min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h3 class="font-semibold text-gray-900">${esc(v.canonical_name)}</h3>
+                ${v.is_onboarded ? '<span class="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full font-medium">On Vendora</span>' : ''}
+              </div>
+              <p class="text-sm text-gray-500 mt-0.5">
+                ${esc(v.category_display_name || '')} · ${esc(v.city||'')}, ${esc(v.state||'')} ${esc(v.zip||'')}
+              </p>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              ${v.distance_miles != null
+                ? `<span class="text-sm font-medium text-gray-600">${v.distance_miles} mi</span>`
+                : '<span class="text-xs text-gray-400">dist N/A</span>'}
+              ${v.score_tier
+                ? `<span class="${tierClass(v.score_tier)} px-2.5 py-1 rounded-full text-sm font-bold">${v.score_tier}</span>`
+                : ''}
+            </div>
           </div>
-          <div class="flex items-center gap-3 shrink-0">
-            ${v.distance_miles != null ? `<span class="text-xs text-gray-500">${v.distance_miles} mi</span>` : ''}
-            ${v.score_tier ? `<span class="badge-${(v.score_tier||'').toLowerCase()} px-2 py-0.5 rounded-full text-xs font-bold">${v.score_tier}</span>` : ''}
-            ${v.is_licensed ? '<span class="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">Licensed</span>' : ''}
+          <div class="flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-gray-600 mb-3">
+            ${v.primary_phone
+              ? `<span class="flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                  </svg>
+                  ${esc(v.primary_phone)}</span>`
+              : ''}
+            ${v.website_url
+              ? `<a href="${esc(v.website_url)}" target="_blank" rel="noopener"
+                  class="flex items-center gap-1 text-blue-600 hover:underline">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                  </svg>
+                  Website</a>`
+              : ''}
+          </div>
+          <div class="flex flex-wrap gap-2">
+            ${v.is_licensed
+              ? '<span class="text-xs bg-green-50 text-green-700 border border-green-100 px-2.5 py-1 rounded-full">✓ Licensed</span>'
+              : '<span class="text-xs bg-gray-50 text-gray-400 border border-gray-100 px-2.5 py-1 rounded-full">Unlicensed</span>'}
+            ${v.is_insured
+              ? '<span class="text-xs bg-green-50 text-green-700 border border-green-100 px-2.5 py-1 rounded-full">✓ Insured</span>'
+              : '<span class="text-xs bg-gray-50 text-gray-400 border border-gray-100 px-2.5 py-1 rounded-full">Uninsured</span>'}
+            ${v.vendor_score != null
+              ? `<span class="text-xs bg-blue-50 text-blue-700 border border-blue-100 px-2.5 py-1 rounded-full">Score: ${parseFloat(v.vendor_score).toFixed(1)}</span>`
+              : ''}
+            <span class="text-xs text-gray-300 ml-auto font-mono">${esc(v.vendor_id?.slice(0,8))}…</span>
           </div>
         </div>
       `).join('');
     }
     show('try-results');
   } catch (err) {
-    status.textContent = 'Error: ' + err.message;
+    status.innerHTML = `<span class="text-red-500">⚠ ${esc(err.message)}</span>`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg> Send Request`;
   }
 }
+
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 async function api(path, method = 'GET', body = null) {
