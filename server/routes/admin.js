@@ -351,4 +351,86 @@ router.post('/call-outcome', async (req, res) => {
   } finally { client.release(); }
 });
 
+
+// ── GET /admin/invite-requests ────────────────────────────────────────────────
+router.get('/invite-requests', requireAdminJwt, async (req, res) => {
+  const status = req.query.status || 'pending';
+  const client = await pool.connect();
+  try {
+    const { rows } = await client.query(
+      `SELECT r.request_id, r.vendor_id, r.requester_name, r.requester_email,
+              r.requester_phone, r.message, r.status, r.requested_at, r.reviewed_at,
+              v.canonical_name
+       FROM vendor_invite_requests r
+       JOIN vendors v ON v.vendor_id = r.vendor_id
+       WHERE ($1 = 'all' OR r.status = $1)
+       ORDER BY r.requested_at DESC`,
+      [status]
+    );
+    res.json({ requests: rows });
+  } finally { client.release(); }
+});
+
+// ── POST /admin/invite-requests/:id/approve ───────────────────────────────────
+router.post('/invite-requests/:id/approve', requireAdminJwt, async (req, res) => {
+  const { id } = req.params;
+  const PUBLIC_URL = (process.env.PUBLIC_URL || 'http://45.77.79.14').replace(/\/$/, '');
+  const client = await pool.connect();
+  try {
+    // Fetch the request
+    const { rows: rr } = await client.query(
+      `SELECT r.*, v.canonical_name FROM vendor_invite_requests r
+       JOIN vendors v ON v.vendor_id = r.vendor_id
+       WHERE r.request_id = $1`,
+      [id]
+    );
+    if (!rr.length) return res.status(404).json({ error: 'Request not found' });
+    const req2 = rr[0];
+    if (req2.status !== 'pending') return res.status(409).json({ error: 'Request is no longer pending' });
+
+    // Generate invite token
+    const token = randomBytes(32).toString('hex');
+    await client.query(
+      `INSERT INTO vendor_invites (vendor_id, token, invited_by)
+       VALUES ($1, $2, 'admin-approved-request')
+       ON CONFLICT (vendor_id) DO UPDATE
+         SET token = EXCLUDED.token, invited_by = EXCLUDED.invited_by,
+             created_at = NOW(), expires_at = NOW() + INTERVAL '30 days', used_at = NULL`,
+      [req2.vendor_id, token]
+    );
+
+    // Mark request approved
+    await client.query(
+      `UPDATE vendor_invite_requests
+         SET status = 'approved', reviewed_at = NOW(), reviewed_by = 'admin'
+       WHERE request_id = $1`,
+      [id]
+    );
+
+    const invite_url = `${PUBLIC_URL}/onboard.html?invite=${token}`;
+    res.json({
+      invite_url,
+      vendor_name:    req2.canonical_name,
+      requester_email: req2.requester_email,
+    });
+  } finally { client.release(); }
+});
+
+// ── POST /admin/invite-requests/:id/reject ────────────────────────────────────
+router.post('/invite-requests/:id/reject', requireAdminJwt, async (req, res) => {
+  const { id } = req.params;
+  const client = await pool.connect();
+  try {
+    const { rows } = await client.query(
+      `UPDATE vendor_invite_requests
+         SET status = 'rejected', reviewed_at = NOW(), reviewed_by = 'admin'
+       WHERE request_id = $1 AND status = 'pending'
+       RETURNING request_id`,
+      [id]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Pending request not found' });
+    res.json({ ok: true });
+  } finally { client.release(); }
+});
+
 export default router;

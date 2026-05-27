@@ -121,6 +121,22 @@
 <!-- ── MAIN APP ────────────────────────────────────────────────────────────────── -->
 <div id="view-app" class="hidden max-w-7xl mx-auto px-4 py-6 fade-in">
 
+  <!-- Tab nav -->
+  <div class="flex gap-1 mb-5 bg-gray-100 p-1 rounded-xl w-fit">
+    <button id="tab-vendors" onclick="switchTab('vendors')"
+      class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors bg-white text-gray-900 shadow-sm">
+      Vendors
+    </button>
+    <button id="tab-requests" onclick="switchTab('requests')"
+      class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors text-gray-500 hover:text-gray-700 relative">
+      Invite Requests
+      <span id="requests-badge" class="hidden absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center"></span>
+    </button>
+  </div>
+
+  <!-- ── VENDORS TAB ──────────────────────────────────────────────────────────── -->
+  <div id="pane-vendors">
+
   <!-- Filter bar -->
   <div class="bg-white rounded-xl border border-gray-200 p-4 mb-5 flex flex-wrap gap-3 items-end">
     <div class="flex-none">
@@ -270,6 +286,78 @@
       </div>
     </div>
   </div>
+
+  </div><!-- /pane-vendors -->
+
+  <!-- ── INVITE REQUESTS TAB ─────────────────────────────────────────────────── -->
+  <div id="pane-requests" class="hidden fade-in">
+
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="font-bold text-gray-900">Vendor Invite Requests</h2>
+      <button onclick="loadRequests()"
+        class="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 transition-colors">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        Refresh
+      </button>
+    </div>
+
+    <!-- Approved invite banner -->
+    <div id="req-invite-banner" class="hidden mb-4 bg-indigo-50 border border-indigo-200 rounded-xl p-4 fade-in">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex-1">
+          <p class="font-semibold text-indigo-900 text-sm mb-1">Invite sent to <span id="req-invite-name" class="text-indigo-700"></span></p>
+          <p class="text-xs text-indigo-700 mb-2">Copy and share this link with them, or it was auto-sent to their email.</p>
+          <div class="flex gap-2">
+            <input id="req-invite-url" readonly onclick="this.select()"
+              class="flex-1 border border-indigo-200 rounded-lg px-3 py-2 text-xs font-mono bg-white focus:outline-none"/>
+            <button onclick="copyReqInvite()" id="btn-copy-req-invite"
+              class="shrink-0 border border-indigo-300 bg-white hover:bg-indigo-50 text-indigo-700 font-semibold text-xs rounded-lg px-4 py-2 transition-colors">
+              Copy
+            </button>
+          </div>
+        </div>
+        <button onclick="document.getElementById('req-invite-banner').classList.add('hidden')"
+          class="text-indigo-400 hover:text-indigo-600 text-lg leading-none">✕</button>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div id="req-loading" class="hidden text-center py-12 text-gray-400 text-sm">
+      <svg class="w-6 h-6 mx-auto mb-2 animate-spin text-indigo-400" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+      </svg>Loading requests…
+    </div>
+
+    <!-- Empty -->
+    <div id="req-empty" class="hidden text-center py-16 text-gray-400 text-sm">
+      <svg class="w-10 h-10 mx-auto mb-3 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+      </svg>
+      No pending invite requests.
+    </div>
+
+    <!-- Requests table -->
+    <div id="req-table" class="hidden bg-white rounded-xl border border-gray-200 overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-[11px] uppercase tracking-[0.1em] text-gray-400 border-b border-gray-100">
+            <th class="text-left font-medium px-5 py-3.5">Business</th>
+            <th class="text-left font-medium px-5 py-3.5">Requester</th>
+            <th class="text-left font-medium px-5 py-3.5">Contact</th>
+            <th class="text-left font-medium px-5 py-3.5">Message</th>
+            <th class="text-left font-medium px-5 py-3.5">Requested</th>
+            <th class="text-left font-medium px-5 py-3.5">Status</th>
+            <th class="text-left font-medium px-5 py-3.5">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="req-tbody"></tbody>
+      </table>
+    </div>
+
+  </div><!-- /pane-requests -->
 
 </div><!-- /view-app -->
 
@@ -701,6 +789,126 @@ async function pollCallStatus(callId) {
   const saved = localStorage.getItem(TOKEN_KEY);
   if (saved) { adminToken = saved; showApp(); }
 })();
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  const tabs  = ['vendors', 'requests'];
+  tabs.forEach(t => {
+    const btn  = document.getElementById('tab-' + t);
+    const pane = document.getElementById('pane-' + t);
+    const active = t === tab;
+    btn.className  = active
+      ? 'px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors bg-white text-gray-900 shadow-sm'
+      : 'px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors text-gray-500 hover:text-gray-700 relative';
+    pane.classList.toggle('hidden', !active);
+  });
+  if (tab === 'requests') loadRequests();
+}
+
+// ── Invite Requests ───────────────────────────────────────────────────────────
+async function loadRequests() {
+  document.getElementById('req-loading').classList.remove('hidden');
+  document.getElementById('req-table').classList.add('hidden');
+  document.getElementById('req-empty').classList.add('hidden');
+  try {
+    const res  = await apiFetch('/admin/invite-requests');
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to load requests');
+    renderRequests(data.requests || []);
+    // Update badge count
+    const pending = (data.requests || []).filter(r => r.status === 'pending').length;
+    const badge = document.getElementById('requests-badge');
+    if (pending > 0) { badge.textContent = pending; badge.classList.remove('hidden'); }
+    else badge.classList.add('hidden');
+  } catch (e) {
+    alert('Could not load requests: ' + e.message);
+  } finally {
+    document.getElementById('req-loading').classList.add('hidden');
+  }
+}
+
+function renderRequests(requests) {
+  const tbody = document.getElementById('req-tbody');
+  tbody.innerHTML = '';
+  if (!requests.length) {
+    document.getElementById('req-empty').classList.remove('hidden');
+    return;
+  }
+  document.getElementById('req-table').classList.remove('hidden');
+  requests.forEach(r => {
+    const statusBadge = {
+      pending:  '<span class="inline-flex items-center gap-1 text-[10px] font-semibold bg-amber-100 text-amber-700 rounded-full px-2 py-0.5">⏳ Pending</span>',
+      approved: '<span class="inline-flex items-center gap-1 text-[10px] font-semibold bg-green-100 text-green-700 rounded-full px-2 py-0.5">✓ Approved</span>',
+      rejected: '<span class="inline-flex items-center gap-1 text-[10px] font-semibold bg-red-100 text-red-700 rounded-full px-2 py-0.5">✗ Rejected</span>',
+    }[r.status] || r.status;
+
+    const date = r.requested_at ? new Date(r.requested_at).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+
+    const actions = r.status === 'pending' ? `
+      <div class="flex gap-1.5">
+        <button onclick="approveRequest('${esc(r.request_id)}','${esc(r.requester_name)}','${esc(r.canonical_name || '')}')"
+          class="inline-flex items-center gap-1 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-3 py-1.5 transition-colors">
+          ✓ Approve
+        </button>
+        <button onclick="rejectRequest('${esc(r.request_id)}')"
+          class="inline-flex items-center gap-1 text-xs font-semibold border border-gray-200 text-gray-600 hover:bg-gray-50 rounded-lg px-3 py-1.5 transition-colors">
+          ✗ Reject
+        </button>
+      </div>` : '<span class="text-xs text-gray-400">—</span>';
+
+    const tr = document.createElement('tr');
+    tr.className = 'border-b border-gray-50 hover:bg-gray-50/50 transition-colors';
+    tr.innerHTML = `
+      <td class="px-5 py-3.5">
+        <div class="font-medium text-gray-900 text-sm">${esc(r.canonical_name || '—')}</div>
+        <div class="text-xs text-gray-400 mt-0.5">${esc(r.vendor_id)}</div>
+      </td>
+      <td class="px-5 py-3.5 text-sm text-gray-700">${esc(r.requester_name)}</td>
+      <td class="px-5 py-3.5">
+        <div class="text-sm text-gray-700">${esc(r.requester_email)}</div>
+        ${r.requester_phone ? `<div class="text-xs text-gray-400 mt-0.5">${esc(r.requester_phone)}</div>` : ''}
+      </td>
+      <td class="px-5 py-3.5 max-w-[200px]">
+        <p class="text-xs text-gray-500 truncate" title="${esc(r.message || '')}">${esc(r.message || '—')}</p>
+      </td>
+      <td class="px-5 py-3.5 text-xs text-gray-500 whitespace-nowrap">${date}</td>
+      <td class="px-5 py-3.5">${statusBadge}</td>
+      <td class="px-5 py-3.5">${actions}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+async function approveRequest(requestId, requesterName, vendorName) {
+  if (!confirm(`Approve request from ${requesterName} for ${vendorName}?\n\nAn invite link will be generated.`)) return;
+  try {
+    const res  = await apiFetch(`/admin/invite-requests/${requestId}/approve`, { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || 'Approval failed'); return; }
+    document.getElementById('req-invite-name').textContent = requesterName;
+    document.getElementById('req-invite-url').value        = data.invite_url;
+    document.getElementById('req-invite-banner').classList.remove('hidden');
+    document.getElementById('req-invite-banner').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    loadRequests(); // refresh list
+  } catch (e) { alert('Error: ' + e.message); }
+}
+
+async function rejectRequest(requestId) {
+  if (!confirm('Reject this invite request?')) return;
+  try {
+    const res  = await apiFetch(`/admin/invite-requests/${requestId}/reject`, { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || 'Rejection failed'); return; }
+    loadRequests();
+  } catch (e) { alert('Error: ' + e.message); }
+}
+
+function copyReqInvite() {
+  copyText(
+    document.getElementById('req-invite-url').value,
+    document.getElementById('btn-copy-req-invite'),
+    'Copy'
+  );
+}
 </script>
 </body>
 </html>

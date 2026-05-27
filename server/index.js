@@ -26,6 +26,7 @@ import keysRoutes   from './routes/keys.js';
 import v3Routes     from './routes/v3.js';
 import vendorRoutes from './routes/vendor-portal.js';
 import adminRoutes  from './routes/admin.js';
+import publicRoutes from './routes/public.js';
 
 const app = express();
 app.use(cors());
@@ -40,6 +41,7 @@ app.use('/vendor', vendorRoutes);
 
 // ── Admin API ──────────────────────────────────────────────────────
 app.use('/admin', adminRoutes);
+app.use('/public', publicRoutes);
 
 // ── Yelp-compatible search + bid API ─────────────────────────────────────────
 app.use('/v3', v3Routes);              // API-key-protected
