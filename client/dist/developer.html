@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Vendora Developer Portal</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  .code { background:#0f172a; color:#e2e8f0; border-radius:8px; padding:16px; font-family:'Courier New',monospace; font-size:12.5px; line-height:1.7; overflow-x:auto; white-space:pre; }
+  .code .kw  { color:#93c5fd; }
+  .code .str { color:#86efac; }
+  .code .cmt { color:#64748b; }
+  .code .val { color:#fbbf24; }
+  .key-mask  { font-family:monospace; letter-spacing:0.05em; }
+  .badge-a   { background:#dcfce7; color:#166534; }
+  .badge-b   { background:#dbeafe; color:#1e40af; }
+  .badge-c   { background:#fef9c3; color:#854d0e; }
+  .badge-d   { background:#ffedd5; color:#9a3412; }
+  .badge-f   { background:#fee2e2; color:#991b1b; }
+  .tab-active { background:white; box-shadow:0 1px 3px rgba(0,0,0,.12); color:#1d4ed8; font-weight:600; }
+  .fade-in    { animation:fadeIn .25s ease; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+  .spinner    { width:18px;height:18px;border:2px solid #e5e7eb;border-top-color:#2563eb;border-radius:50%;animation:spin .7s linear infinite;display:inline-block; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+</style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+<!-- ═══ NAVBAR ═══════════════════════════════════════════════════════════════ -->
+<nav class="bg-white border-b border-gray-200 sticky top-0 z-40">
+  <div class="max-w-7xl mx-auto px-4 flex items-center h-14 gap-6">
+    <a href="/index.html" class="flex items-center gap-2 font-bold text-blue-700 text-lg no-underline">
+      <svg class="w-7 h-7" viewBox="0 0 32 32" fill="none">
+        <rect width="32" height="32" rx="8" fill="#2563eb"/>
+        <path d="M8 10h16M8 16h10M8 22h13" stroke="white" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+      Vendora <span class="text-gray-400 font-normal text-sm ml-1">Developers</span>
+    </a>
+    <span class="flex-1"></span>
+    <button id="nav-docs" onclick="showSection('docs')"
+      class="text-sm text-gray-600 hover:text-blue-700 font-medium">Documentation</button>
+    <div id="nav-auth-btns" class="flex gap-2">
+      <button onclick="showAuth('login')"
+        class="text-sm text-gray-600 hover:text-blue-700 font-medium px-3 py-1.5">Sign in</button>
+      <button onclick="showAuth('register')"
+        class="text-sm bg-blue-600 text-white rounded-lg px-3 py-1.5 hover:bg-blue-700">Get API key</button>
+    </div>
+    <div id="nav-user-btns" class="hidden flex items-center gap-3">
+      <span id="nav-email" class="text-sm text-gray-500"></span>
+      <button onclick="logout()"
+        class="text-sm text-gray-500 hover:text-red-600 font-medium">Sign out</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══ LANDING ══════════════════════════════════════════════════════════════ -->
+<div id="view-landing" class="hidden">
+  <div class="bg-gradient-to-br from-blue-700 to-blue-900 text-white py-20 px-4 text-center">
+    <div class="max-w-3xl mx-auto">
+      <div class="inline-block bg-blue-600/50 text-blue-200 text-xs font-semibold px-3 py-1 rounded-full mb-4">
+        Developer API · v2
+      </div>
+      <h1 class="text-4xl font-bold mb-4">Build with the Vendora Vendor Network</h1>
+      <p class="text-blue-200 text-lg mb-8">
+        Search thousands of pre-vetted, licensed and insured service vendors by location.
+        Pass any address fragment + a radius and get ranked results instantly.
+      </p>
+      <div class="flex justify-center gap-3">
+        <button onclick="showAuth('register')"
+          class="bg-white text-blue-700 font-semibold px-6 py-3 rounded-xl hover:bg-blue-50 shadow">
+          Get a free API key
+        </button>
+        <button onclick="showSection('docs')"
+          class="border border-blue-400 text-white font-semibold px-6 py-3 rounded-xl hover:bg-blue-800">
+          View docs
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Feature cards -->
+  <div class="max-w-5xl mx-auto px-4 py-16 grid md:grid-cols-3 gap-6">
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+      <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
+        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+      </div>
+      <h3 class="font-semibold text-gray-900 mb-2">Address-aware search</h3>
+      <p class="text-gray-500 text-sm">Pass any address fragment — street, city, zip, or partial — and a radius in miles. We geocode it and return vendors sorted by proximity.</p>
+    </div>
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+      <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center mb-4">
+        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
+        </svg>
+      </div>
+      <h3 class="font-semibold text-gray-900 mb-2">Pre-vetted vendors</h3>
+      <p class="text-gray-500 text-sm">Every vendor in the network is scored A–F based on licensing, insurance, BBB rating, reviews, and years in business.</p>
+    </div>
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+      <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
+        <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+      </div>
+      <h3 class="font-semibold text-gray-900 mb-2">Simple REST API</h3>
+      <p class="text-gray-500 text-sm">One endpoint, standard JSON, bearer token auth. Works with any language. Get results in under 500ms.</p>
+    </div>
+  </div>
+
+  <!-- Quick example -->
+  <div class="max-w-5xl mx-auto px-4 pb-16">
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+      <div class="border-b border-gray-100 px-6 py-4">
+        <h2 class="font-semibold text-gray-800">Quick example</h2>
+      </div>
+      <div class="grid md:grid-cols-2">
+        <div class="p-6 border-r border-gray-100">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Request</p>
+          <div class="code"><span class="kw">GET</span> /v2/vendors<span class="cmt">
+  ?address=</span><span class="str">123 Main St Newark NJ</span><span class="cmt">
+  &radius=</span><span class="val">15</span><span class="cmt">
+  &category=</span><span class="str">PLB</span><span class="cmt">
+  &limit=</span><span class="val">5</span></div>
+          <div class="mt-3 code"><span class="cmt">Authorization:</span> Bearer <span class="str">vnd_your_key</span></div>
+        </div>
+        <div class="p-6">
+          <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Response</p>
+          <div class="code">{
+  <span class="kw">"total"</span>: <span class="val">42</span>,
+  <span class="kw">"radius_miles"</span>: <span class="val">15</span>,
+  <span class="kw">"search_center"</span>: {
+    <span class="kw">"lat"</span>: <span class="val">40.7357</span>,
+    <span class="kw">"lng"</span>: <span class="val">-74.1724</span>
+  },
+  <span class="kw">"vendors"</span>: [{
+    <span class="kw">"canonical_name"</span>: <span class="str">"Joe's Plumbing"</span>,
+    <span class="kw">"score_tier"</span>: <span class="str">"A"</span>,
+    <span class="kw">"distance_miles"</span>: <span class="val">3.2</span>,
+    <span class="kw">"is_licensed"</span>: <span class="val">true</span>,
+    <span class="kw">"primary_phone"</span>: <span class="str">"9735551234"</span>
+  }]
+}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ AUTH ══════════════════════════════════════════════════════════════════ -->
+<div id="view-auth" class="hidden fade-in">
+  <div class="min-h-[calc(100vh-56px)] flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 w-full max-w-md p-8">
+      <!-- Tabs -->
+      <div class="flex bg-gray-100 rounded-xl p-1 mb-6">
+        <button id="tab-login" onclick="switchAuthTab('login')"
+          class="flex-1 py-2 text-sm rounded-lg transition-all">Sign in</button>
+        <button id="tab-register" onclick="switchAuthTab('register')"
+          class="flex-1 py-2 text-sm rounded-lg transition-all">Create account</button>
+      </div>
+
+      <!-- Login form -->
+      <form id="form-login" onsubmit="doLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <input type="email" id="login-email" required placeholder="you@company.com"
+            class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+          <input type="password" id="login-password" required placeholder="••••••••"
+            class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+        </div>
+        <div id="login-error" class="hidden text-red-600 text-sm bg-red-50 rounded-xl px-4 py-2.5"></div>
+        <button type="submit" id="login-btn"
+          class="w-full bg-blue-600 text-white font-semibold rounded-xl py-2.5 hover:bg-blue-700 transition-colors">
+          Sign in
+        </button>
+        <p class="text-center text-sm text-gray-500">
+          No account? <button type="button" onclick="switchAuthTab('register')"
+            class="text-blue-600 font-medium hover:underline">Create one free</button>
+        </p>
+      </form>
+
+      <!-- Register form -->
+      <form id="form-register" onsubmit="doRegister(event)" class="space-y-4 hidden">
+        <div class="grid grid-cols-2 gap-3">
+          <div class="col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Full name</label>
+            <input type="text" id="reg-name" required placeholder="Jane Smith"
+              class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+          </div>
+          <div class="col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <input type="email" id="reg-email" required placeholder="you@company.com"
+              class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+          </div>
+          <div class="col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Company <span class="text-gray-400 font-normal">(optional)</span></label>
+            <input type="text" id="reg-company" placeholder="Acme Corp"
+              class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+          </div>
+          <div class="col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <input type="password" id="reg-password" required placeholder="Min. 8 characters"
+              class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+          </div>
+        </div>
+        <div id="reg-error" class="hidden text-red-600 text-sm bg-red-50 rounded-xl px-4 py-2.5"></div>
+        <button type="submit" id="reg-btn"
+          class="w-full bg-blue-600 text-white font-semibold rounded-xl py-2.5 hover:bg-blue-700 transition-colors">
+          Create account &amp; get API key
+        </button>
+        <p class="text-center text-sm text-gray-500">
+          Already have an account? <button type="button" onclick="switchAuthTab('login')"
+            class="text-blue-600 font-medium hover:underline">Sign in</button>
+        </p>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ DASHBOARD ════════════════════════════════════════════════════════════ -->
+<div id="view-dashboard" class="hidden fade-in">
+  <div class="max-w-7xl mx-auto px-4 py-8 flex gap-8">
+
+    <!-- Sidebar -->
+    <aside class="w-52 shrink-0">
+      <nav class="space-y-1 sticky top-20">
+        <button onclick="showSection('keys')" id="sb-keys"
+          class="w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+          </svg>
+          API Keys
+        </button>
+        <button onclick="showSection('tryit')" id="sb-tryit"
+          class="w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M13 10V3L4 14h7v7l9-11h-7z"/>
+          </svg>
+          Try the API
+        </button>
+        <button onclick="showSection('docs')" id="sb-docs"
+          class="w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+          Documentation
+        </button>
+      </nav>
+    </aside>
+
+    <!-- Main content -->
+    <main class="flex-1 min-w-0">
+
+      <!-- ── API Keys panel ── -->
+      <div id="panel-keys" class="hidden">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h1 class="text-xl font-bold text-gray-900">API Keys</h1>
+            <p class="text-gray-500 text-sm mt-0.5">Up to 5 active keys per account</p>
+          </div>
+          <button onclick="openCreateKey()"
+            class="bg-blue-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-blue-700 flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            New API Key
+          </button>
+        </div>
+
+        <div id="keys-list" class="space-y-3">
+          <div class="flex items-center justify-center py-12 text-gray-400">
+            <div class="spinner mr-3"></div> Loading…
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Try it panel ── -->
+      <div id="panel-tryit" class="hidden">
+        <h1 class="text-xl font-bold text-gray-900 mb-1">Try the API</h1>
+        <p class="text-gray-500 text-sm mb-6">Search vendors without writing any code</p>
+
+        <div class="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+          <div class="grid md:grid-cols-2 gap-4 mb-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Address <span class="text-red-500">*</span></label>
+              <input id="try-address" type="text" placeholder="e.g. Newark NJ or 07102 or 123 Main St"
+                class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Radius (miles)</label>
+              <input id="try-radius" type="number" value="25" min="1" max="200"
+                class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Keyword</label>
+              <input id="try-q" type="text" placeholder="e.g. plumber, hvac, roofing"
+                class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">Category code</label>
+              <input id="try-category" type="text" placeholder="e.g. PLB or PLB.GEN"
+                class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+            </div>
+          </div>
+          <div class="flex items-center gap-3">
+            <button onclick="doTryApi()"
+              class="bg-blue-600 text-white font-semibold px-5 py-2.5 rounded-xl hover:bg-blue-700 flex items-center gap-2 text-sm">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+              Run
+            </button>
+            <span id="try-status" class="text-sm text-gray-400"></span>
+          </div>
+        </div>
+
+        <div id="try-results" class="hidden">
+          <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+            <div class="border-b border-gray-100 px-6 py-3 flex items-center justify-between">
+              <span id="try-result-count" class="text-sm font-medium text-gray-700"></span>
+              <button onclick="document.getElementById('try-json').classList.toggle('hidden')"
+                class="text-xs text-blue-600 hover:underline">Toggle JSON</button>
+            </div>
+            <div id="try-json" class="hidden border-b border-gray-100">
+              <pre id="try-json-pre" class="code text-xs p-4 max-h-64 overflow-auto rounded-none"></pre>
+            </div>
+            <div id="try-vendor-grid" class="divide-y divide-gray-50"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Documentation panel ── -->
+      <div id="panel-docs" class="hidden">
+        <h1 class="text-xl font-bold text-gray-900 mb-6">API Reference</h1>
+
+        <!-- Base URL -->
+        <section class="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+          <h2 class="font-semibold text-gray-900 mb-3">Base URL</h2>
+          <div class="code">http://45.77.79.14/v2</div>
+          <p class="text-sm text-gray-500 mt-3">All requests must include a valid API key. The API returns JSON.</p>
+        </section>
+
+        <!-- Auth -->
+        <section class="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+          <h2 class="font-semibold text-gray-900 mb-3">Authentication</h2>
+          <p class="text-sm text-gray-600 mb-3">Pass your API key as a Bearer token in the Authorization header, or as the <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">api_key</code> query parameter.</p>
+          <div class="code"><span class="cmt"># Preferred: header</span>
+Authorization: Bearer vnd_your_api_key_here
+
+<span class="cmt"># Alternative: query param</span>
+GET /v2/vendors?api_key=vnd_your_api_key_here&address=...</div>
+        </section>
+
+        <!-- Endpoint -->
+        <section class="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-6">
+          <div class="bg-gray-50 border-b border-gray-200 px-6 py-3 flex items-center gap-3">
+            <span class="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded">GET</span>
+            <span class="font-mono text-sm text-gray-800">/v2/vendors</span>
+            <span class="text-gray-400 text-sm">— Search vendors by location</span>
+          </div>
+          <div class="p-6">
+            <h3 class="text-sm font-semibold text-gray-700 mb-3">Query Parameters</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="text-left text-xs font-semibold text-gray-400 uppercase">
+                    <th class="pb-2 pr-4">Parameter</th>
+                    <th class="pb-2 pr-4">Type</th>
+                    <th class="pb-2 pr-4">Required</th>
+                    <th class="pb-2">Description</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                  <tr class="align-top">
+                    <td class="py-2.5 pr-4 font-mono text-blue-700 text-xs">address</td>
+                    <td class="py-2.5 pr-4 text-gray-500">string</td>
+                    <td class="py-2.5 pr-4 text-red-500 font-medium">Yes</td>
+                    <td class="py-2.5 text-gray-600">Any address fragment — street, city, zip, partial address. Geocoded automatically.</td>
+                  </tr>
+                  <tr class="align-top">
+                    <td class="py-2.5 pr-4 font-mono text-blue-700 text-xs">radius</td>
+                    <td class="py-2.5 pr-4 text-gray-500">number</td>
+                    <td class="py-2.5 pr-4 text-gray-400">No</td>
+                    <td class="py-2.5 text-gray-600">Search radius in miles. Default: <code class="bg-gray-100 px-1 rounded text-xs">25</code>. Range: 1–200.</td>
+                  </tr>
+                  <tr class="align-top">
+                    <td class="py-2.5 pr-4 font-mono text-blue-700 text-xs">q</td>
+                    <td class="py-2.5 pr-4 text-gray-500">string</td>
+                    <td class="py-2.5 pr-4 text-gray-400">No</td>
+                    <td class="py-2.5 text-gray-600">Keyword to match against business name.</td>
+                  </tr>
+                  <tr class="align-top">
+                    <td class="py-2.5 pr-4 font-mono text-blue-700 text-xs">category</td>
+                    <td class="py-2.5 pr-4 text-gray-500">string</td>
+                    <td class="py-2.5 pr-4 text-gray-400">No</td>
+                    <td class="py-2.5 text-gray-600">Category code prefix. E.g. <code class="bg-gray-100 px-1 rounded text-xs">PLB</code> (all plumbing) or <code class="bg-gray-100 px-1 rounded text-xs">PLB.GEN</code> (general plumbing).</td>
+                  </tr>
+                  <tr class="align-top">
+                    <td class="py-2.5 pr-4 font-mono text-blue-700 text-xs">limit</td>
+                    <td class="py-2.5 pr-4 text-gray-500">number</td>
+                    <td class="py-2.5 pr-4 text-gray-400">No</td>
+                    <td class="py-2.5 text-gray-600">Results per page. Default: <code class="bg-gray-100 px-1 rounded text-xs">12</code>. Max: 50.</td>
+                  </tr>
+                  <tr class="align-top">
+                    <td class="py-2.5 pr-4 font-mono text-blue-700 text-xs">page</td>
+                    <td class="py-2.5 pr-4 text-gray-500">number</td>
+                    <td class="py-2.5 pr-4 text-gray-400">No</td>
+                    <td class="py-2.5 text-gray-600">Page number, 1-indexed. Default: <code class="bg-gray-100 px-1 rounded text-xs">1</code>.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Vendor object -->
+        <section class="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-6">
+          <div class="bg-gray-50 border-b border-gray-200 px-6 py-3">
+            <h3 class="font-semibold text-sm text-gray-800">Response Schema</h3>
+          </div>
+          <div class="p-6">
+            <div class="code">{
+  <span class="kw">"vendors"</span>: [
+    {
+      <span class="kw">"vendor_id"</span>:              <span class="str">"uuid"</span>,
+      <span class="kw">"canonical_name"</span>:         <span class="str">"Joe's Plumbing LLC"</span>,
+      <span class="kw">"city"</span>:                   <span class="str">"Newark"</span>,
+      <span class="kw">"state"</span>:                  <span class="str">"NJ"</span>,
+      <span class="kw">"zip"</span>:                    <span class="str">"07102"</span>,
+      <span class="kw">"primary_phone"</span>:          <span class="str">"9735551234"</span>,
+      <span class="kw">"website_url"</span>:            <span class="str">"https://joesplumbing.com"</span>,
+      <span class="kw">"is_onboarded"</span>:          <span class="val">true</span>,
+      <span class="kw">"is_licensed"</span>:           <span class="val">true</span>,
+      <span class="kw">"is_insured"</span>:            <span class="val">true</span>,
+      <span class="kw">"vendor_score"</span>:          <span class="val">84.5</span>,
+      <span class="kw">"score_tier"</span>:            <span class="str">"A"</span>,
+      <span class="kw">"category_display_name"</span>:  <span class="str">"General Plumbing"</span>,
+      <span class="kw">"category_code"</span>:         <span class="str">"PLB.GEN"</span>,
+      <span class="kw">"distance_miles"</span>:        <span class="val">3.2</span>   <span class="cmt">// null if not yet geocoded</span>
+    }
+  ],
+  <span class="kw">"total"</span>:          <span class="val">127</span>,
+  <span class="kw">"page"</span>:           <span class="val">1</span>,
+  <span class="kw">"limit"</span>:          <span class="val">12</span>,
+  <span class="kw">"radius_miles"</span>:   <span class="val">25</span>,
+  <span class="kw">"search_center"</span>: {
+    <span class="kw">"lat"</span>: <span class="val">40.7357</span>,
+    <span class="kw">"lng"</span>: <span class="val">-74.1724</span>,
+    <span class="kw">"formatted_address"</span>: <span class="str">"Newark, Essex County, NJ, USA"</span>
+  }
+}</div>
+          </div>
+        </section>
+
+        <!-- Code examples -->
+        <section class="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-6">
+          <div class="border-b border-gray-200 px-6 py-3">
+            <h3 class="font-semibold text-sm text-gray-800">Code Examples</h3>
+          </div>
+          <div class="p-6 space-y-4">
+            <!-- Tabs -->
+            <div class="flex bg-gray-100 rounded-lg p-1 w-fit gap-1">
+              <button onclick="switchCodeTab('curl')" id="codetab-curl"
+                class="px-3 py-1.5 text-xs font-medium rounded-md">cURL</button>
+              <button onclick="switchCodeTab('js')" id="codetab-js"
+                class="px-3 py-1.5 text-xs font-medium rounded-md">JavaScript</button>
+              <button onclick="switchCodeTab('python')" id="codetab-python"
+                class="px-3 py-1.5 text-xs font-medium rounded-md">Python</button>
+            </div>
+            <div id="code-curl" class="code"><span class="kw">curl</span> -X GET \
+  <span class="str">"http://45.77.79.14/v2/vendors?address=123+Main+St+Newark+NJ&radius=25&category=PLB"</span> \
+  -H <span class="str">"Authorization: Bearer vnd_your_api_key_here"</span></div>
+            <div id="code-js" class="code hidden"><span class="kw">const</span> res = <span class="kw">await</span> fetch(
+  <span class="str">'http://45.77.79.14/v2/vendors?'</span> + <span class="kw">new</span> URLSearchParams({
+    address:  <span class="str">'123 Main St Newark NJ'</span>,
+    radius:   <span class="val">25</span>,
+    category: <span class="str">'PLB'</span>,
+    limit:    <span class="val">10</span>,
+  }),
+  { headers: { <span class="str">'Authorization'</span>: <span class="str">'Bearer vnd_your_api_key_here'</span> } }
+);
+<span class="kw">const</span> { vendors, total, search_center } = <span class="kw">await</span> res.json();
+console.log(<span class="str">`Found ${total} vendors near ${search_center.formatted_address}`</span>);</div>
+            <div id="code-python" class="code hidden"><span class="kw">import</span> requests
+
+resp = requests.get(
+    <span class="str">'http://45.77.79.14/v2/vendors'</span>,
+    params={
+        <span class="str">'address'</span>:  <span class="str">'123 Main St Newark NJ'</span>,
+        <span class="str">'radius'</span>:   <span class="val">25</span>,
+        <span class="str">'category'</span>: <span class="str">'PLB'</span>,
+        <span class="str">'limit'</span>:    <span class="val">10</span>,
+    },
+    headers={<span class="str">'Authorization'</span>: <span class="str">'Bearer vnd_your_api_key_here'</span>},
+)
+data = resp.json()
+print(<span class="str">f"Found {data['total']} vendors near {data['search_center']['formatted_address']}"</span>)</div>
+          </div>
+        </section>
+
+        <!-- Score tiers -->
+        <section class="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+          <h2 class="font-semibold text-gray-900 mb-3">Score Tiers</h2>
+          <p class="text-sm text-gray-600 mb-4">Each vendor receives a composite score (0–100) based on licensing, insurance, BBB rating, years in business, and customer reviews. The score is bucketed into a letter grade.</p>
+          <div class="flex flex-wrap gap-3">
+            <span class="badge-a px-3 py-1.5 rounded-full text-sm font-semibold">A — 80–100 · Excellent</span>
+            <span class="badge-b px-3 py-1.5 rounded-full text-sm font-semibold">B — 65–79 · Good</span>
+            <span class="badge-c px-3 py-1.5 rounded-full text-sm font-semibold">C — 50–64 · Average</span>
+            <span class="badge-d px-3 py-1.5 rounded-full text-sm font-semibold">D — 35–49 · Below avg</span>
+            <span class="badge-f px-3 py-1.5 rounded-full text-sm font-semibold">F — 0–34 · Poor</span>
+          </div>
+        </section>
+
+        <!-- Rate limits -->
+        <section class="bg-white rounded-2xl border border-gray-200 p-6">
+          <h2 class="font-semibold text-gray-900 mb-3">Rate Limits &amp; Limits</h2>
+          <div class="space-y-2 text-sm text-gray-600">
+            <p>• <strong>5 API keys</strong> per developer account</p>
+            <p>• <strong>50 results max</strong> per request (use <code class="bg-gray-100 px-1 rounded">page</code> for pagination)</p>
+            <p>• <strong>200 miles max</strong> radius per request</p>
+            <p>• Rate limiting will be introduced in a future release. Please avoid more than 10 requests/second.</p>
+          </div>
+        </section>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ═══ KEY REVEAL MODAL ═════════════════════════════════════════════════════ -->
+<div id="modal-key" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 fade-in">
+    <div class="flex items-center gap-3 mb-4">
+      <div class="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center">
+        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+      </div>
+      <div>
+        <h2 class="font-bold text-gray-900">API Key Created</h2>
+        <p class="text-sm text-gray-500">Copy it now — you won't see it again.</p>
+      </div>
+    </div>
+    <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 flex items-start gap-2">
+      <svg class="w-4 h-4 text-amber-600 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+      </svg>
+      <p class="text-sm text-amber-800">Store this key securely. It cannot be retrieved after closing this dialog.</p>
+    </div>
+    <div class="flex gap-2 mb-5">
+      <div id="modal-key-display"
+        class="flex-1 bg-slate-900 text-green-300 font-mono text-sm rounded-xl px-4 py-3 break-all key-mask"></div>
+      <button onclick="copyModalKey()"
+        class="shrink-0 bg-blue-600 text-white text-sm font-semibold px-4 rounded-xl hover:bg-blue-700 flex items-center gap-1.5">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3"/>
+        </svg>
+        <span id="modal-copy-txt">Copy</span>
+      </button>
+    </div>
+    <button onclick="closeKeyModal()"
+      class="w-full border border-gray-200 text-gray-700 font-semibold py-2.5 rounded-xl hover:bg-gray-50">
+      Done
+    </button>
+  </div>
+</div>
+
+<!-- ═══ CREATE KEY FORM MODAL ════════════════════════════════════════════════ -->
+<div id="modal-create" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 fade-in">
+    <h2 class="font-bold text-gray-900 mb-4">New API Key</h2>
+    <label class="block text-sm font-medium text-gray-700 mb-1">Label</label>
+    <input id="key-label" type="text" placeholder="e.g. Production, Development"
+      class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm mb-5 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+    <div id="create-error" class="hidden text-red-600 text-sm bg-red-50 rounded-xl px-4 py-2.5 mb-4"></div>
+    <div class="flex gap-3">
+      <button onclick="document.getElementById('modal-create').classList.add('hidden')"
+        class="flex-1 border border-gray-200 text-gray-700 font-semibold py-2.5 rounded-xl hover:bg-gray-50">
+        Cancel
+      </button>
+      <button onclick="doCreateKey()" id="create-key-btn"
+        class="flex-1 bg-blue-600 text-white font-semibold py-2.5 rounded-xl hover:bg-blue-700">
+        Create Key
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+const BASE = '';    // same origin
+let token    = localStorage.getItem('dev_token');
+let devInfo  = null;
+let activeSection = '';
+let _modalKey = '';
+
+// ── Bootstrap ────────────────────────────────────────────────────────────────
+(function init() {
+  if (token) {
+    showDashboard();
+  } else {
+    showLanding();
+  }
+  switchCodeTab('curl');
+})();
+
+// ── Views ────────────────────────────────────────────────────────────────────
+function showLanding() {
+  hide('view-auth'); hide('view-dashboard'); show('view-landing');
+  show('nav-auth-btns'); hide('nav-user-btns');
+}
+function showAuth(tab) {
+  hide('view-landing'); hide('view-dashboard'); show('view-auth');
+  switchAuthTab(tab || 'login');
+}
+function showDashboard() {
+  hide('view-landing'); hide('view-auth'); show('view-dashboard');
+  hide('nav-auth-btns'); show('nav-user-btns');
+  const payload = parseJwt(token);
+  if (payload) {
+    document.getElementById('nav-email').textContent = payload.email || '';
+  }
+  showSection(activeSection || 'keys');
+}
+function showSection(name) {
+  activeSection = name;
+  ['keys','tryit','docs'].forEach(s => {
+    const panel = document.getElementById('panel-' + s);
+    const btn   = document.getElementById('sb-'    + s);
+    if (panel) panel.classList.toggle('hidden', s !== name);
+    if (btn) {
+      btn.classList.toggle('bg-blue-50',  s === name);
+      btn.classList.toggle('text-blue-700', s === name);
+      btn.classList.toggle('text-gray-600', s !== name);
+    }
+  });
+  if (name === 'keys') loadKeys();
+}
+
+// ── Auth ─────────────────────────────────────────────────────────────────────
+function switchAuthTab(tab) {
+  document.getElementById('form-login').classList.toggle('hidden', tab !== 'login');
+  document.getElementById('form-register').classList.toggle('hidden', tab !== 'register');
+  document.getElementById('tab-login').classList.toggle('tab-active', tab === 'login');
+  document.getElementById('tab-register').classList.toggle('tab-active', tab === 'register');
+}
+async function doLogin(e) {
+  e.preventDefault();
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true; btn.innerHTML = '<div class="spinner mx-auto"></div>';
+  const err = document.getElementById('login-error');
+  err.classList.add('hidden');
+  try {
+    const r = await api('/dev/login', 'POST', {
+      email:    document.getElementById('login-email').value,
+      password: document.getElementById('login-password').value,
+    });
+    if (r.error) { err.textContent = r.error; err.classList.remove('hidden'); return; }
+    token = r.token; localStorage.setItem('dev_token', token);
+    showDashboard();
+  } finally {
+    btn.disabled = false; btn.textContent = 'Sign in';
+  }
+}
+async function doRegister(e) {
+  e.preventDefault();
+  const btn = document.getElementById('reg-btn');
+  btn.disabled = true; btn.innerHTML = '<div class="spinner mx-auto"></div>';
+  const err = document.getElementById('reg-error');
+  err.classList.add('hidden');
+  try {
+    const r = await api('/dev/register', 'POST', {
+      email:     document.getElementById('reg-email').value,
+      password:  document.getElementById('reg-password').value,
+      full_name: document.getElementById('reg-name').value,
+      company:   document.getElementById('reg-company').value,
+    });
+    if (r.error) { err.textContent = r.error; err.classList.remove('hidden'); return; }
+    token = r.token; localStorage.setItem('dev_token', token);
+    showDashboard();
+  } finally {
+    btn.disabled = false; btn.textContent = 'Create account & get API key';
+  }
+}
+function logout() {
+  token = null; localStorage.removeItem('dev_token');
+  showLanding();
+}
+
+// ── API Keys ──────────────────────────────────────────────────────────────────
+async function loadKeys() {
+  const list = document.getElementById('keys-list');
+  list.innerHTML = '<div class="flex items-center justify-center py-12 text-gray-400"><div class="spinner mr-3"></div> Loading…</div>';
+  const r = await api('/dev/keys');
+  if (r.error) { list.innerHTML = `<p class="text-red-500 text-sm">${r.error}</p>`; return; }
+  if (!r.keys.length) {
+    list.innerHTML = `<div class="text-center py-12">
+      <p class="text-gray-400 mb-4">No API keys yet</p>
+      <button onclick="openCreateKey()" class="bg-blue-600 text-white text-sm font-semibold px-5 py-2.5 rounded-xl hover:bg-blue-700">
+        Create your first key
+      </button>
+    </div>`;
+    return;
+  }
+  list.innerHTML = r.keys.map(k => `
+    <div class="bg-white rounded-2xl border border-gray-200 p-5 flex items-center gap-4" id="keyrow-${k.key_id}">
+      <div class="w-10 h-10 bg-slate-100 rounded-xl flex items-center justify-center shrink-0">
+        <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+        </svg>
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="font-semibold text-gray-900 text-sm">${esc(k.label)}</p>
+        <p class="font-mono text-xs text-gray-400 mt-0.5">${esc(k.key_prefix)}••••••••••••••••••••••••••••••••••••••••</p>
+        <div class="flex items-center gap-4 mt-1.5 text-xs text-gray-400">
+          <span>Created ${fmtDate(k.created_at)}</span>
+          ${k.last_used_at ? `<span>Last used ${fmtDate(k.last_used_at)}</span>` : '<span>Never used</span>'}
+          <span>${k.request_count.toLocaleString()} requests</span>
+        </div>
+      </div>
+      <button onclick="revokeKey('${k.key_id}')"
+        class="shrink-0 text-sm text-red-500 hover:text-red-700 font-medium border border-red-200 px-3 py-1.5 rounded-lg hover:bg-red-50">
+        Revoke
+      </button>
+    </div>
+  `).join('');
+}
+function openCreateKey() {
+  document.getElementById('key-label').value = '';
+  document.getElementById('create-error').classList.add('hidden');
+  show('modal-create');
+}
+async function doCreateKey() {
+  const btn = document.getElementById('create-key-btn');
+  btn.disabled = true; btn.innerHTML = '<div class="spinner mx-auto"></div>';
+  const err = document.getElementById('create-error');
+  err.classList.add('hidden');
+  try {
+    const r = await api('/dev/keys', 'POST', { label: document.getElementById('key-label').value || 'My API Key' });
+    if (r.error) { err.textContent = r.error; err.classList.remove('hidden'); return; }
+    hide('modal-create');
+    _modalKey = r.key;
+    document.getElementById('modal-key-display').textContent = r.key;
+    document.getElementById('modal-copy-txt').textContent = 'Copy';
+    show('modal-key');
+    loadKeys();
+  } finally {
+    btn.disabled = false; btn.textContent = 'Create Key';
+  }
+}
+function copyModalKey() {
+  copyText(_modalKey, 'modal-copy-txt', 'Copied!', 'Copy');
+}
+function closeKeyModal() {
+  _modalKey = '';
+  hide('modal-key');
+}
+async function revokeKey(id) {
+  if (!confirm('Revoke this API key? Any apps using it will stop working immediately.')) return;
+  const r = await api('/dev/keys/' + id, 'DELETE');
+  if (r.error) { alert(r.error); return; }
+  loadKeys();
+}
+
+// ── Try the API ───────────────────────────────────────────────────────────────
+async function doTryApi() {
+  const address = document.getElementById('try-address').value.trim();
+  if (!address) { alert('Please enter an address'); return; }
+  const radius   = document.getElementById('try-radius').value  || 25;
+  const q        = document.getElementById('try-q').value.trim();
+  const category = document.getElementById('try-category').value.trim();
+
+  const status = document.getElementById('try-status');
+  status.textContent = 'Searching…';
+  document.getElementById('try-results').classList.add('hidden');
+
+  const params = new URLSearchParams({ address, radius, limit: 10 });
+  if (q)        params.set('q', q);
+  if (category) params.set('category', category);
+
+  try {
+    const t = Date.now();
+    const res = await fetch('/v2/vendors?' + params, {
+      headers: token ? { 'Authorization': 'Bearer ' + token } : {},
+    });
+    const ms = Date.now() - t;
+    const data = await res.json();
+
+    if (!res.ok || data.error) {
+      status.textContent = 'Error: ' + (data.error || res.statusText);
+      return;
+    }
+
+    status.textContent = `${data.total} vendors · ${ms}ms`;
+    document.getElementById('try-result-count').textContent =
+      `Showing ${data.vendors.length} of ${data.total} vendors within ${data.radius_miles} miles of "${data.search_center?.formatted_address || address}"`;
+    document.getElementById('try-json-pre').textContent = JSON.stringify(data, null, 2);
+
+    const grid = document.getElementById('try-vendor-grid');
+    if (!data.vendors.length) {
+      grid.innerHTML = '<p class="text-gray-400 text-sm text-center py-8">No vendors found in this area.</p>';
+    } else {
+      grid.innerHTML = data.vendors.map(v => `
+        <div class="flex items-center gap-4 px-6 py-4">
+          <div class="flex-1 min-w-0">
+            <p class="font-semibold text-gray-900 text-sm truncate">${esc(v.canonical_name)}</p>
+            <p class="text-xs text-gray-400 mt-0.5">${esc(v.city || '')}, ${esc(v.state || '')} · ${esc(v.category_display_name || '')}</p>
+          </div>
+          <div class="flex items-center gap-3 shrink-0">
+            ${v.distance_miles != null ? `<span class="text-xs text-gray-500">${v.distance_miles} mi</span>` : ''}
+            ${v.score_tier ? `<span class="badge-${(v.score_tier||'').toLowerCase()} px-2 py-0.5 rounded-full text-xs font-bold">${v.score_tier}</span>` : ''}
+            ${v.is_licensed ? '<span class="text-xs bg-green-50 text-green-700 px-2 py-0.5 rounded-full">Licensed</span>' : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+    show('try-results');
+  } catch (err) {
+    status.textContent = 'Error: ' + err.message;
+  }
+}
+
+// ── Utilities ─────────────────────────────────────────────────────────────────
+async function api(path, method = 'GET', body = null) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+  };
+  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+  if (body)  opts.body = JSON.stringify(body);
+  try {
+    const r = await fetch(BASE + path, opts);
+    return await r.json();
+  } catch (e) { return { error: e.message }; }
+}
+function show(id) { document.getElementById(id)?.classList.remove('hidden'); }
+function hide(id) { document.getElementById(id)?.classList.add('hidden');    }
+function esc(s)   { return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+}
+function parseJwt(t) {
+  try { return JSON.parse(atob(t.split('.')[1])); } catch { return null; }
+}
+function switchCodeTab(lang) {
+  ['curl','js','python'].forEach(l => {
+    document.getElementById('code-'    + l)?.classList.toggle('hidden', l !== lang);
+    const btn = document.getElementById('codetab-' + l);
+    if (btn) {
+      btn.classList.toggle('bg-white',     l === lang);
+      btn.classList.toggle('shadow-sm',    l === lang);
+      btn.classList.toggle('text-gray-900',l === lang);
+      btn.classList.toggle('text-gray-500',l !== lang);
+    }
+  });
+}
+function showAuth(tab)    { window._showAuth(tab); }  // re-exposed above as top-level fn
+function copyText(text, elId, successMsg, resetMsg) {
+  const el = document.getElementById(elId);
+  function done() { if (el) { el.textContent = successMsg; setTimeout(() => el.textContent = resetMsg, 2000); } }
+  if (navigator.clipboard?.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(() => execCopy(text, done));
+  } else execCopy(text, done);
+}
+function execCopy(text, cb) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try { document.execCommand('copy'); if(cb) cb(); }
+  catch { alert('Please select the key text and press Ctrl+C / Cmd+C'); }
+  document.body.removeChild(ta);
+}
+</script>
+</body>
+</html>
