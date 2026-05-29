@@ -187,21 +187,41 @@ router.post('/call-vendor', requireAdminJwt, async (req, res) => {
       error: `Cannot parse phone "${vendor.primary_phone}" into a dialable number. Update it in the vendor record first.`,
     });
 
-    // Use the pre-configured Vapi assistant, override only the dynamic per-vendor fields
+    // Fetch the assistant's model config so we can override messages without Vapi rejecting the provider
+    const ASSISTANT_ID = '63ff5b64-4ea9-4e11-98e5-fdd8efb085c2';
+    let modelProvider = 'openai';
+    let modelName     = 'gpt-4o';
+    try {
+      const ar = await fetch(`https://api.vapi.ai/assistant/${ASSISTANT_ID}`, {
+        headers: { Authorization: `Bearer ${VAPI_KEY}` },
+      });
+      if (ar.ok) {
+        const a  = await ar.json();
+        modelProvider = a?.model?.provider || modelProvider;
+        modelName     = a?.model?.model     || modelName;
+      }
+    } catch (e) {
+      console.warn('[vapi] could not fetch assistant model info, using defaults:', e.message);
+    }
+
+    // Only send serverUrl if PUBLIC_URL is HTTPS (Vapi rejects plain HTTP webhooks)
+    const webhookUrl = PUBLIC_URL.startsWith('https://') ? `${PUBLIC_URL}/admin/call-outcome` : undefined;
+
     const vapiPayload = {
-      assistantId:   '63ff5b64-4ea9-4e11-98e5-fdd8efb085c2',
-      phoneNumberId: VAPI_PHONE_ID,
+      assistantId:   ASSISTANT_ID,
+      phoneNumberId: VAPI_PHONE_ID.trim(),
       customer:      { number: e164, name: vendor.canonical_name },
       assistantOverrides: {
-        // Inject vendor-specific context into the system prompt
+        // Inject vendor-specific context — must include provider/model to pass Vapi validation
         model: {
+          provider: modelProvider,
+          model:    modelName,
           messages: [{ role: 'system', content: buildSystemPrompt(vendor) }],
         },
         // Personalised opening line for this vendor
         firstMessage: `Hi, is this ${vendor.canonical_name}? Great — my name's Alex, I'm calling from Vendora. We help connect ${vendor.category_display_name || 'service'} businesses with property managers who need work in the ${vendor.city || 'local'} area. Do you have just a minute?`,
-        // Webhook back to this server
-        serverUrl:       `${PUBLIC_URL}/admin/call-outcome`,
-        serverUrlSecret: WH_SECRET,
+        // Webhook — only if server has a public HTTPS URL
+        ...(webhookUrl && { serverUrl: webhookUrl, serverUrlSecret: WH_SECRET }),
       },
     };
 
