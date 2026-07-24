@@ -11,6 +11,7 @@ import { pool }        from '../db.js';
 import jwt             from 'jsonwebtoken';
 import { randomBytes } from 'crypto';
 import { sendJobDetailsEmail, buildQuoteCallPrompt, expandAddress } from './public.js';
+import { sendVendorPushNotification } from '../utils/push.js';
 
 
 /** Send SMS via Twilio */
@@ -1324,4 +1325,64 @@ router.get('/rfqs', requireAdminJwt, async (req, res) => {
     res.json({ rfqs: rows });
   } finally { client.release(); }
 });
+
+// GET /admin/rfqs/:id/messages?vendor_id=<uuid>  — conversation thread for one vendor on an RFQ
+router.get('/rfqs/:id/messages', requireAdminJwt, async (req, res) => {
+  const { vendor_id } = req.query;
+  if (!vendor_id) return res.status(400).json({ error: 'vendor_id query param required' });
+  const client = await pool.connect();
+  try {
+    const { rows } = await client.query(
+      `SELECT m.message_id, m.sender_type, m.sender_id, m.vendor_id, m.body, m.created_at,
+              COALESCE(a.full_name, vpu.first_name || ' ' || vpu.last_name, 'System') AS sender_name
+       FROM rfq_messages m
+       LEFT JOIN admin_users a ON a.user_id = m.sender_id AND m.sender_type = 'admin'
+       LEFT JOIN vendor_portal_users vpu ON vpu.user_id = m.sender_id AND m.sender_type = 'vendor'
+       WHERE m.quote_request_id = $1
+         AND (m.vendor_id = $2 OR m.vendor_id IS NULL)
+       ORDER BY m.created_at ASC`,
+      [req.params.id, vendor_id]
+    );
+    res.json({ messages: rows });
+  } finally { client.release(); }
+});
+
+// POST /admin/rfqs/:id/messages  — send a message to a specific vendor on an RFQ, push-notify them
+router.post('/rfqs/:id/messages', requireAdminJwt, async (req, res) => {
+  const { vendor_id, body } = req.body || {};
+  if (!vendor_id || !body?.trim()) return res.status(400).json({ error: 'vendor_id and body required' });
+  const client = await pool.connect();
+  try {
+    // Verify vendor is assigned to this RFQ
+    const { rows: qrv } = await client.query(
+      `SELECT qrv.id FROM quote_request_vendors qrv
+       WHERE qrv.quote_request_id = $1 AND qrv.vendor_id = $2`,
+      [req.params.id, vendor_id]
+    );
+    if (!qrv.length) return res.status(404).json({ error: 'Vendor not assigned to this RFQ' });
+
+    const { rows } = await client.query(
+      `INSERT INTO rfq_messages (quote_request_id, sender_type, sender_id, vendor_id, body)
+       VALUES ($1, 'admin', $2, $3, $4) RETURNING *`,
+      [req.params.id, req.admin?.userId || null, vendor_id, body.trim()]
+    );
+
+    // Get vendor canonical_name for the push notification
+    const { rows: vendorRows } = await client.query(
+      `SELECT canonical_name FROM vendors WHERE vendor_id = $1`, [vendor_id]
+    );
+    const vendorName = vendorRows[0]?.canonical_name || 'your job';
+
+    // Fire push notification to the vendor (non-blocking)
+    sendVendorPushNotification(
+      vendor_id,
+      'New Message',
+      `Admin sent a message about your ${vendorName} quote request`,
+      { type: 'rfq_message', quote_request_id: req.params.id }
+    ).catch(() => {});
+
+    res.json({ message: rows[0] });
+  } finally { client.release(); }
+});
+
 export default router;

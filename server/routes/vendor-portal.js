@@ -499,17 +499,19 @@ router.post('/quote-requests/:qrv_id/quote', requireVendorJwt, async (req, res) 
 
 
 // GET /vendor/quote-requests/:id/messages
+// Returns only messages addressed to this vendor (vendor_id matches) or broadcast messages (vendor_id IS NULL)
 router.get('/quote-requests/:id/messages', requireVendorJwt, async (req, res) => {
   const client = await pool.connect();
   try {
     const { rows } = await client.query(
-      `SELECT m.message_id, m.sender_type, m.sender_id, m.body, m.created_at,
+      `SELECT m.message_id, m.sender_type, m.sender_id, m.body, m.created_at, m.vendor_id,
               COALESCE(v.first_name || ' ' || v.last_name, 'Admin') AS sender_name
        FROM rfq_messages m
        LEFT JOIN vendor_portal_users v ON v.user_id = m.sender_id AND m.sender_type = 'vendor'
        WHERE m.quote_request_id = $1
+         AND (m.vendor_id = $2 OR m.vendor_id IS NULL)
        ORDER BY m.created_at ASC`,
-      [req.params.id]
+      [req.params.id, req.vendorUser.vendorId]
     );
     res.json({ messages: rows });
   } finally { client.release(); }
@@ -522,9 +524,9 @@ router.post('/quote-requests/:id/messages', requireVendorJwt, async (req, res) =
   const client = await pool.connect();
   try {
     const { rows } = await client.query(
-      `INSERT INTO rfq_messages (quote_request_id, sender_type, sender_id, body)
-       VALUES ($1, 'vendor', $2, $3) RETURNING *`,
-      [req.params.id, req.user.user_id, body.trim()]
+      `INSERT INTO rfq_messages (quote_request_id, sender_type, sender_id, vendor_id, body)
+       VALUES ($1, 'vendor', $2, $3, $4) RETURNING *`,
+      [req.params.id, req.vendorUser.vendorUserId, req.vendorUser.vendorId, body.trim()]
     );
     res.json({ message: rows[0] });
   } finally { client.release(); }
@@ -534,23 +536,20 @@ router.post('/quote-requests/:id/messages', requireVendorJwt, async (req, res) =
 router.post('/quote-requests/:id/pass', requireVendorJwt, async (req, res) => {
   const client = await pool.connect();
   try {
-    // Find the qrv record for this vendor
     const { rows: qrv } = await client.query(
       `SELECT id FROM quote_request_vendors
-       WHERE quote_request_id = $1 AND vendor_id = (
-         SELECT vendor_id FROM vendor_portal_users WHERE user_id = $2
-       )`,
-      [req.params.id, req.user.user_id]
+       WHERE quote_request_id = $1 AND vendor_id = $2`,
+      [req.params.id, req.vendorUser.vendorId]
     );
     if (!qrv.length) return res.status(404).json({ error: 'RFQ not found for this vendor' });
     await client.query(
       `UPDATE quote_request_vendors SET status = 'passed' WHERE id = $1`,
       [qrv[0].id]
     );
-    // Insert a system message
     await client.query(
-      `INSERT INTO rfq_messages (quote_request_id, sender_type, body) VALUES ($1, 'system', 'Vendor passed on this job')`,
-      [req.params.id]
+      `INSERT INTO rfq_messages (quote_request_id, sender_type, vendor_id, body)
+       VALUES ($1, 'system', $2, 'Vendor passed on this job')`,
+      [req.params.id, req.vendorUser.vendorId]
     );
     res.json({ success: true });
   } finally { client.release(); }
@@ -567,11 +566,11 @@ router.get('/quotes/history', requireVendorJwt, async (req, res) => {
               qr.property_type, qr.urgency, qr.requester_name, qr.created_at, qr.status AS rfq_status
        FROM quote_request_vendors qrv
        JOIN quote_requests qr ON qr.quote_request_id = qrv.quote_request_id
-       WHERE qrv.vendor_id = (SELECT vendor_id FROM vendor_portal_users WHERE user_id = $1)
+       WHERE qrv.vendor_id = $1
          AND qrv.status IN ('quoted','passed','accepted','declined','expired')
        ORDER BY COALESCE(qrv.quoted_at, qrv.created_at) DESC
        LIMIT 50`,
-      [req.user.user_id]
+      [req.vendorUser.vendorId]
     );
     res.json({ history: rows });
   } finally { client.release(); }
@@ -585,10 +584,10 @@ router.put('/profile', requireVendorJwt, async (req, res) => {
     if (first_name || last_name) {
       await client.query(
         `UPDATE vendor_portal_users SET first_name = COALESCE($1, first_name), last_name = COALESCE($2, last_name) WHERE user_id = $3`,
-        [first_name?.trim() || null, last_name?.trim() || null, req.user.user_id]
+        [first_name?.trim() || null, last_name?.trim() || null, req.vendorUser.vendorUserId]
       );
     }
-    const { rows: vpu } = await client.query(`SELECT vendor_id FROM vendor_portal_users WHERE user_id = $1`, [req.user.user_id]);
+    const { rows: vpu } = await client.query(`SELECT vendor_id FROM vendor_portal_users WHERE user_id = $1`, [req.vendorUser.vendorUserId]);
     if (vpu[0]?.vendor_id) {
       await client.query(
         `UPDATE vendors SET
@@ -616,7 +615,7 @@ router.put('/profile', requireVendorJwt, async (req, res) => {
               v.canonical_name, v.primary_phone, v.street_address, v.city, v.state, v.zip, v.primary_category_code
        FROM vendor_portal_users vpu LEFT JOIN vendors v ON v.vendor_id = vpu.vendor_id
        WHERE vpu.user_id = $1`,
-      [req.user.user_id]
+      [req.vendorUser.vendorUserId]
     );
     res.json(rows[0] || {});
   } finally { client.release(); }
