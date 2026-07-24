@@ -40,8 +40,8 @@
     <span class="flex-1"></span>
     <button id="nav-docs" onclick="showSection('docs')"
       class="text-sm text-gray-600 hover:text-blue-700 font-medium">Documentation</button>
-    <button id="nav-playground" onclick="showSection('tryit')"
-      class="text-sm text-gray-600 hover:text-blue-700 font-medium">Playground</button>
+    <button id="nav-vendors" onclick="showSection('vendors')"
+      class="text-sm text-gray-600 hover:text-blue-700 font-medium">Find Vendors</button>
     <div id="nav-auth-btns" class="flex gap-2">
       <button onclick="showAuth('login')"
         class="text-sm text-gray-600 hover:text-blue-700 font-medium px-3 py-1.5">Sign in</button>
@@ -126,28 +126,31 @@
       <div class="grid md:grid-cols-2">
         <div class="p-6 border-r border-gray-100">
           <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Request</p>
-          <div class="code"><span class="kw">GET</span> /v2/vendors<span class="cmt">
-  ?address=</span><span class="str">123 Main St Newark NJ</span><span class="cmt">
-  &radius=</span><span class="val">15</span><span class="cmt">
-  &category=</span><span class="str">PLB</span><span class="cmt">
-  &limit=</span><span class="val">5</span></div>
-          <div class="mt-3 code"><span class="cmt">Authorization:</span> Bearer <span class="str">vnd_your_key</span></div>
+          <div class="code"><span class="kw">POST</span> /v3/vendors/search
+<span class="kw">Content-Type:</span> <span class="str">application/json</span>
+<span class="kw">Authorization:</span> Bearer <span class="str">vnd_your_key</span>
+
+{
+  <span class="kw">"description"</span>: <span class="str">"kitchen faucet dripping"</span>,
+  <span class="kw">"address"</span>:     <span class="str">"123 Main St Newark NJ"</span>,
+  <span class="kw">"radius"</span>:      <span class="val">25</span>,
+  <span class="kw">"limit"</span>:       <span class="val">5</span>
+}</div>
         </div>
         <div class="p-6">
           <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Response</p>
           <div class="code">{
-  <span class="kw">"total"</span>: <span class="val">42</span>,
-  <span class="kw">"radius_miles"</span>: <span class="val">15</span>,
-  <span class="kw">"search_center"</span>: {
-    <span class="kw">"lat"</span>: <span class="val">40.7357</span>,
-    <span class="kw">"lng"</span>: <span class="val">-74.1724</span>
-  },
+  <span class="kw">"total"</span>:            <span class="val">42</span>,
+  <span class="kw">"matched_category"</span>: <span class="str">"PLB.GEN"</span>,
+  <span class="kw">"category_label"</span>:   <span class="str">"General Plumbing"</span>,
+  <span class="kw">"region"</span>: { <span class="kw">"lat"</span>: <span class="val">40.7357</span>, <span class="kw">"lng"</span>: <span class="val">-74.1724</span>,
+               <span class="kw">"radius_miles"</span>: <span class="val">25</span> },
   <span class="kw">"vendors"</span>: [{
-    <span class="kw">"canonical_name"</span>: <span class="str">"Joe's Plumbing"</span>,
-    <span class="kw">"score_tier"</span>: <span class="str">"A"</span>,
-    <span class="kw">"distance_miles"</span>: <span class="val">3.2</span>,
-    <span class="kw">"is_licensed"</span>: <span class="val">true</span>,
-    <span class="kw">"primary_phone"</span>: <span class="str">"9735551234"</span>
+    <span class="kw">"canonical_name"</span>:  <span class="str">"Joe's Plumbing"</span>,
+    <span class="kw">"score_tier"</span>:      <span class="str">"A"</span>,
+    <span class="kw">"distance_miles"</span>:  <span class="val">3.2</span>,
+    <span class="kw">"is_licensed"</span>:     <span class="val">true</span>,
+    <span class="kw">"primary_phone"</span>:   <span class="str">"+19735551234"</span>
   }]
 }</div>
         </div>
@@ -244,13 +247,13 @@
           </svg>
           API Keys
         </button>
-        <button onclick="showSection('tryit')" id="sb-tryit"
-          class="w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button onclick="showSection('vendors')" id="sb-vendors"
+          class="w-full text-left flex items-center gap-3 px-4 py-2.5 rounded-xl text-gray-600 hover:bg-blue-50 hover:text-blue-700 transition-colors text-sm font-medium">
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M13 10V3L4 14h7v7l9-11h-7z"/>
+              d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
           </svg>
-          Try the API
+          Find Vendors
         </button>
         <button onclick="showSection('docs')" id="sb-docs"
           class="w-full text-left px-4 py-2.5 rounded-xl text-sm font-medium flex items-center gap-2">
@@ -260,6 +263,7 @@
           </svg>
           Documentation
         </button>
+
       </nav>
     </aside>
 
@@ -289,10 +293,14 @@
         </div>
       </div>
 
-      <!-- ── Try it panel ── -->
-      <div id="panel-tryit" class="hidden">
-        <h1 class="text-xl font-bold text-gray-900 mb-1">API Playground</h1>
-        <p class="text-gray-500 text-sm mb-6">Test your API key live — no code needed</p>
+      <!-- ── Find Vendors panel ── -->
+      <div id="panel-vendors" class="hidden">
+        <h1 class="text-xl font-bold text-gray-900 mb-1">Find Vendors</h1>
+        <p class="text-gray-500 text-sm mb-6">
+          Describe the maintenance issue. Vendora uses LLM to detect the category, geocodes the
+          address, and returns nearby vendors ranked by distance and score. Select up to 10 and
+          click <strong>Get Quotes</strong> to have Alex call them by phone.
+        </p>
 
         <!-- API Key -->
         <div class="bg-white rounded-2xl border border-gray-200 p-5 mb-4">
@@ -300,213 +308,283 @@
             API Key <span class="text-red-500">*</span>
           </label>
           <div class="flex gap-2">
-            <input id="try-apikey" type="text"
-              placeholder="vnd_your_api_key_here"
-              oninput="updateCurlPreview()"
-              class="flex-1 border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50"/>
-            <button onclick="pasteKey()"
-              class="shrink-0 text-sm border border-gray-200 px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50 flex items-center gap-1.5">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-              </svg>
-              Paste
+            <input id="vs-apikey" type="text" placeholder="vnd_your_api_key_here"
+              class="flex-1 border border-gray-300 rounded-xl px-4 py-2.5 text-sm font-mono
+                     focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50"/>
+            <button onclick="vsPasteKey()"
+              class="shrink-0 text-sm border border-gray-200 px-3 py-2 rounded-xl text-gray-600 hover:bg-gray-50">
+              Paste Key
             </button>
           </div>
-          <p class="text-xs text-gray-400 mt-1.5">
-            Your key is sent directly to the Vendora API — it is never logged or stored by this page.
-            <span id="key-source-hint" class="text-blue-600 font-medium"></span>
-          </p>
+          <p class="text-xs text-gray-400 mt-1.5">Sent directly to the API — never logged by this page.</p>
         </div>
 
-        <!-- Parameters -->
+        <!-- Search parameters -->
         <div class="bg-white rounded-2xl border border-gray-200 p-5 mb-4">
           <h2 class="text-sm font-semibold text-gray-700 mb-4">Search Parameters</h2>
-          <div class="grid md:grid-cols-2 gap-4 mb-5">
-            <div class="md:col-span-2">
+          <div class="space-y-4 mb-5">
+            <div>
               <label class="block text-xs font-medium text-gray-500 mb-1">
-                Address <span class="text-red-500">*</span>
-                <span class="text-gray-400 font-normal ml-1">— any fragment: street, city, zip, partial address</span>
+                Problem description <span class="text-red-500">*</span>
+                <span class="text-gray-400 font-normal ml-1">— category auto-detected via LLM</span>
               </label>
-              <input id="try-address" type="text"
-                placeholder="e.g.  Newark NJ  ·  07102  ·  123 Main St Trenton"
-                oninput="updateCurlPreview()"
-                class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+              <textarea id="vs-description" rows="3"
+                placeholder="e.g. Basement light does not come on"
+                class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm
+                       focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"></textarea>
             </div>
             <div>
-              <label class="block text-xs font-medium text-gray-500 mb-1">Radius (miles)</label>
-              <input id="try-radius" type="number" value="25" min="1" max="200"
-                oninput="updateCurlPreview()"
-                class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+              <label class="block text-xs font-medium text-gray-500 mb-1">
+                Property address <span class="text-red-500">*</span>
+              </label>
+              <input id="vs-address" type="text"
+                placeholder="e.g. 123 Market St, Newark, NJ 07102"
+                class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm
+                       focus:outline-none focus:ring-2 focus:ring-blue-500"/>
             </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-500 mb-1">Results per page</label>
-              <input id="try-limit" type="number" value="10" min="1" max="50"
-                oninput="updateCurlPreview()"
-                class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-500 mb-1">Keyword filter</label>
-              <input id="try-q" type="text" placeholder="e.g. plumber, hvac, roof"
-                oninput="updateCurlPreview()"
-                class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-500 mb-1">Category code</label>
-              <select id="try-category" onchange="updateCurlPreview()"
-                class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
-                <option value="">All categories</option>
-                <option value="PLB">PLB — Plumbing</option>
-                <option value="ELC">ELC — Electrical</option>
-                <option value="HVC">HVC — HVAC</option>
-                <option value="GCT">GCT — General Contractor</option>
-                <option value="HND">HND — Handyman</option>
-                <option value="CLN">CLN — Cleaning</option>
-                <option value="LND">LND — Landscaping</option>
-                <option value="ROF">ROF — Roofing</option>
-                <option value="PNT">PNT — Painting</option>
-                <option value="APP">APP — Appliances</option>
-                <option value="DMP">DMP — Dumpster</option>
-                <option value="FLR">FLR — Flooring</option>
-                <option value="JNK">JNK — Junk Removal</option>
-                <option value="LCK">LCK — Locksmith</option>
-                <option value="PST">PST — Pest Control</option>
-              </select>
+            <div class="grid grid-cols-3 gap-4">
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Radius (miles)</label>
+                <input id="vs-radius" type="number" value="25" min="1" max="200"
+                  class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm
+                         focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Max results</label>
+                <input id="vs-limit" type="number" value="20" min="1" max="50"
+                  class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm
+                         focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Sort by</label>
+                <select id="vs-sort"
+                  class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm bg-white
+                         focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="distance">Distance</option>
+                  <option value="vendor_score">Vendor score</option>
+                  <option value="rating">Rating</option>
+                  <option value="review_count">Review count</option>
+                </select>
+              </div>
             </div>
           </div>
-
-          <!-- Live curl preview -->
-          <div class="mb-5">
-            <div class="flex items-center justify-between mb-2">
-              <span class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Generated request</span>
-              <button onclick="copyCurlCmd()" id="curl-copy-btn"
-                class="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3"/>
-                </svg>
-                Copy
-              </button>
-            </div>
-            <pre id="curl-preview" class="code text-xs leading-relaxed whitespace-pre-wrap break-all">curl -X GET "http://45.77.79.14/v2/vendors?address=...&radius=25" \
-  -H "Authorization: Bearer vnd_your_key"</pre>
-          </div>
-
           <div class="flex items-center gap-3">
-            <button onclick="doTryApi()" id="try-run-btn"
-              class="bg-blue-600 text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-blue-700 flex items-center gap-2 text-sm">
+            <button onclick="doVendorSearch()" id="vs-search-btn"
+              class="bg-blue-600 text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-blue-700
+                     flex items-center gap-2 text-sm">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/>
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
               </svg>
-              Send Request
+              Search Vendors
             </button>
-            <span id="try-status" class="text-sm text-gray-400"></span>
+            <span id="vs-search-status" class="text-sm text-gray-400"></span>
           </div>
         </div>
 
-        <!-- Results -->
-        <div id="try-results" class="hidden space-y-3">
+        <!-- Search results -->
+        <div id="vs-results" class="hidden space-y-3">
 
           <!-- Summary bar -->
-          <div class="bg-white rounded-2xl border border-gray-200 px-5 py-3 flex items-center justify-between">
-            <span id="try-result-count" class="text-sm font-medium text-gray-700"></span>
-            <button onclick="document.getElementById('try-json-wrap').classList.toggle('hidden')"
-              class="text-xs text-blue-600 hover:underline font-medium">Toggle raw JSON</button>
-          </div>
-
-          <!-- Raw JSON -->
-          <div id="try-json-wrap" class="hidden bg-white rounded-2xl border border-gray-200 overflow-hidden">
-            <pre id="try-json-pre" class="code text-xs p-5 max-h-72 overflow-auto rounded-none"></pre>
+          <div class="bg-white rounded-2xl border border-gray-200 px-5 py-3
+                      flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <span id="vs-result-count" class="text-sm font-semibold text-gray-800"></span>
+              <span id="vs-category-badge"
+                class="ml-2 bg-blue-100 text-blue-700 text-xs font-semibold px-2 py-0.5 rounded-full"></span>
+            </div>
+            <div class="flex items-center gap-3">
+              <button onclick="vsSelectAll()"
+                class="text-xs text-blue-600 hover:underline font-medium">Select all</button>
+              <button onclick="vsClearAll()"
+                class="text-xs text-gray-400 hover:text-gray-600">Clear</button>
+              <span id="vs-selected-count"
+                class="hidden bg-indigo-100 text-indigo-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+                0 selected
+              </span>
+            </div>
           </div>
 
           <!-- Vendor cards -->
-          <div id="try-vendor-grid" class="space-y-3"></div>
+          <div id="vs-vendor-cards" class="space-y-2"></div>
 
-          <!-- Pagination hint -->
-          <p id="try-page-hint" class="hidden text-center text-xs text-gray-400 pb-2"></p>
+          <!-- Get Quotes bar -->
+          <div id="vs-quotes-bar" class="hidden bg-indigo-50 border border-indigo-200
+                                         rounded-2xl p-5 space-y-4">
+            <h3 class="text-sm font-semibold text-indigo-900">Get Quotes for Selected Vendors</h3>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">Urgency</label>
+                <select id="vs-urgency"
+                  class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm bg-white
+                         focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                  <option value="normal">Normal</option>
+                  <option value="urgent">Urgent</option>
+                  <option value="scheduled">Scheduled</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1">
+                  Requester name (optional)
+                </label>
+                <input id="vs-requester" type="text" placeholder="e.g. John Smith"
+                  class="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm
+                         focus:outline-none focus:ring-2 focus:ring-indigo-500"/>
+              </div>
+            </div>
+            <div class="flex items-center gap-3">
+              <button onclick="doGetQuotes()" id="vs-quotes-btn"
+                class="bg-indigo-600 text-white font-semibold px-6 py-2.5 rounded-xl hover:bg-indigo-700
+                       flex items-center gap-2 text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                </svg>
+                <span id="vs-quotes-btn-label">Get Quotes for Selected</span>
+              </button>
+              <span id="vs-quotes-status" class="text-sm text-gray-500"></span>
+            </div>
+          </div>
+
+          <!-- Quote call results -->
+          <div id="vs-quote-results" class="hidden space-y-3">
+            <div class="bg-white rounded-2xl border border-gray-200 px-5 py-3">
+              <div id="vs-quote-summary" class="text-sm font-semibold text-gray-800"></div>
+              <div id="vs-quote-request-id" class="text-xs text-gray-400 mt-0.5"></div>
+            </div>
+            <div id="vs-quote-cards" class="space-y-2"></div>
+          </div>
         </div>
       </div>
 
       <!-- ── Documentation panel ── -->
-      <!-- ── Documentation panel ── -->
       <div id="panel-docs" class="hidden">
-        <h1 class="text-xl font-bold text-gray-900 mb-6">API Reference</h1>
 
-        <!-- Base URL -->
+        <h1 class="text-xl font-bold text-gray-900 mb-1">API Reference</h1>
+        <p class="text-sm text-gray-500 mb-6">Vendora v3 &mdash; find and contact local vendors from any application.</p>
+
+        <!-- ── Quick-nav ────────────────────────────────────────────────── -->
+        <div class="flex flex-wrap gap-2 mb-7">
+          <a href="#doc-auth"     class="text-xs font-medium text-blue-600 hover:underline bg-blue-50 px-3 py-1.5 rounded-full">Authentication</a>
+          <a href="#doc-search"   class="text-xs font-medium text-blue-600 hover:underline bg-blue-50 px-3 py-1.5 rounded-full">POST /v3/vendors/search</a>
+          <a href="#doc-schema"   class="text-xs font-medium text-blue-600 hover:underline bg-blue-50 px-3 py-1.5 rounded-full">Response Schema</a>
+          <a href="#doc-vendor"   class="text-xs font-medium text-blue-600 hover:underline bg-blue-50 px-3 py-1.5 rounded-full">Vendor Object</a>
+          <a href="#doc-quotes"   class="text-xs font-medium text-blue-600 hover:underline bg-blue-50 px-3 py-1.5 rounded-full">Request Quotes</a>
+          <a href="#doc-tiers"    class="text-xs font-medium text-blue-600 hover:underline bg-blue-50 px-3 py-1.5 rounded-full">Score Tiers</a>
+          <a href="#doc-examples" class="text-xs font-medium text-blue-600 hover:underline bg-blue-50 px-3 py-1.5 rounded-full">Code Examples</a>
+          <a href="#doc-errors"   class="text-xs font-medium text-blue-600 hover:underline bg-blue-50 px-3 py-1.5 rounded-full">Errors</a>
+        </div>
+
+        <!-- ── Base URL ──────────────────────────────────────────────────── -->
         <section class="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
           <h2 class="font-semibold text-gray-900 mb-3">Base URL</h2>
-          <div class="code">http://45.77.79.14/v2</div>
-          <p class="text-sm text-gray-500 mt-3">All requests must include a valid API key. The API returns JSON.</p>
+          <div class="code">http://45.77.79.14</div>
+          <p class="text-sm text-gray-500 mt-3">All endpoints are under <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">/v3/</code>. All requests and responses use JSON.</p>
         </section>
 
-        <!-- Auth -->
-        <section class="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+        <!-- ── Authentication ────────────────────────────────────────────── -->
+        <section id="doc-auth" class="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
           <h2 class="font-semibold text-gray-900 mb-3">Authentication</h2>
-          <p class="text-sm text-gray-600 mb-3">Pass your API key as a Bearer token in the Authorization header, or as the <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">api_key</code> query parameter.</p>
-          <div class="code"><span class="cmt"># Preferred: header</span>
-Authorization: Bearer vnd_your_api_key_here
-
-<span class="cmt"># Alternative: query param</span>
-GET /v2/vendors?api_key=vnd_your_api_key_here&address=...</div>
+          <p class="text-sm text-gray-600 mb-4">Every request must include your API key as a Bearer token in the <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">Authorization</code> header.</p>
+          <div class="code">Authorization: Bearer vnd_your_api_key_here</div>
+          <p class="text-sm text-gray-500 mt-3">Create and manage your keys in the <strong>API Keys</strong> tab. Each key is shown only once at creation — store it securely.</p>
         </section>
 
-        <!-- Endpoint -->
-        <section class="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-6">
+        <!-- ── POST /v3/vendors/search ───────────────────────────────────── -->
+        <section id="doc-search" class="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-6">
           <div class="bg-gray-50 border-b border-gray-200 px-6 py-3 flex items-center gap-3">
-            <span class="bg-blue-600 text-white text-xs font-bold px-2 py-0.5 rounded">GET</span>
-            <span class="font-mono text-sm text-gray-800">/v2/vendors</span>
-            <span class="text-gray-400 text-sm">— Search vendors by location</span>
+            <span class="bg-green-600 text-white text-xs font-bold px-2 py-0.5 rounded">POST</span>
+            <span class="font-mono text-sm text-gray-800">/v3/vendors/search</span>
+            <span class="text-gray-400 text-sm ml-auto hidden sm:block">Find vendors &amp; optionally request quotes</span>
           </div>
           <div class="p-6">
-            <h3 class="text-sm font-semibold text-gray-700 mb-3">Query Parameters</h3>
-            <div class="overflow-x-auto">
+            <p class="text-sm text-gray-600 mb-5">
+              The core endpoint. Describe the job in plain English — Vendora automatically detects the trade category using AI, geocodes the address, and returns matching vendors sorted by distance.
+              Set <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">get_quotes: true</code> to also have Vendora call or email the vendors on your behalf.
+            </p>
+
+            <h3 class="text-sm font-semibold text-gray-700 mb-3">Request Body <span class="text-gray-400 font-normal">(JSON)</span></h3>
+            <div class="overflow-x-auto mb-6">
               <table class="w-full text-sm">
                 <thead>
-                  <tr class="text-left text-xs font-semibold text-gray-400 uppercase">
-                    <th class="pb-2 pr-4">Parameter</th>
+                  <tr class="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide border-b border-gray-100">
+                    <th class="pb-2 pr-4">Field</th>
                     <th class="pb-2 pr-4">Type</th>
                     <th class="pb-2 pr-4">Required</th>
+                    <th class="pb-2 pr-4">Default</th>
                     <th class="pb-2">Description</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50">
                   <tr class="align-top">
-                    <td class="py-2.5 pr-4 font-mono text-blue-700 text-xs">address</td>
-                    <td class="py-2.5 pr-4 text-gray-500">string</td>
-                    <td class="py-2.5 pr-4 text-red-500 font-medium">Yes</td>
-                    <td class="py-2.5 text-gray-600">Any address fragment — street, city, zip, partial address. Geocoded automatically.</td>
+                    <td class="py-3 pr-4 font-mono text-blue-700 text-xs">description</td>
+                    <td class="py-3 pr-4 text-gray-500">string</td>
+                    <td class="py-3 pr-4 text-red-500 font-medium">Yes</td>
+                    <td class="py-3 pr-4 text-gray-400">&mdash;</td>
+                    <td class="py-3 text-gray-600">Plain-English description of the job. AI classifies the trade category from this text. The more detail, the better the match. <em>e.g. "basement light does not turn on"</em></td>
                   </tr>
                   <tr class="align-top">
-                    <td class="py-2.5 pr-4 font-mono text-blue-700 text-xs">radius</td>
-                    <td class="py-2.5 pr-4 text-gray-500">number</td>
-                    <td class="py-2.5 pr-4 text-gray-400">No</td>
-                    <td class="py-2.5 text-gray-600">Search radius in miles. Default: <code class="bg-gray-100 px-1 rounded text-xs">25</code>. Range: 1–200.</td>
+                    <td class="py-3 pr-4 font-mono text-blue-700 text-xs">address</td>
+                    <td class="py-3 pr-4 text-gray-500">string</td>
+                    <td class="py-3 pr-4 text-red-500 font-medium">Yes</td>
+                    <td class="py-3 pr-4 text-gray-400">&mdash;</td>
+                    <td class="py-3 text-gray-600">Full property address, geocoded to find vendors nearby. City + state or full street address both work. <em>e.g. "123 Main St Newark NJ 07102"</em></td>
                   </tr>
                   <tr class="align-top">
-                    <td class="py-2.5 pr-4 font-mono text-blue-700 text-xs">q</td>
-                    <td class="py-2.5 pr-4 text-gray-500">string</td>
-                    <td class="py-2.5 pr-4 text-gray-400">No</td>
-                    <td class="py-2.5 text-gray-600">Keyword to match against business name.</td>
+                    <td class="py-3 pr-4 font-mono text-blue-700 text-xs">radius</td>
+                    <td class="py-3 pr-4 text-gray-500">number</td>
+                    <td class="py-3 pr-4 text-gray-400">No</td>
+                    <td class="py-3 pr-4 font-mono text-xs text-gray-500">25</td>
+                    <td class="py-3 text-gray-600">Search radius in miles. Range: 1–200.</td>
                   </tr>
                   <tr class="align-top">
-                    <td class="py-2.5 pr-4 font-mono text-blue-700 text-xs">category</td>
-                    <td class="py-2.5 pr-4 text-gray-500">string</td>
-                    <td class="py-2.5 pr-4 text-gray-400">No</td>
-                    <td class="py-2.5 text-gray-600">Category code prefix. E.g. <code class="bg-gray-100 px-1 rounded text-xs">PLB</code> (all plumbing) or <code class="bg-gray-100 px-1 rounded text-xs">PLB.GEN</code> (general plumbing).</td>
+                    <td class="py-3 pr-4 font-mono text-blue-700 text-xs">limit</td>
+                    <td class="py-3 pr-4 text-gray-500">number</td>
+                    <td class="py-3 pr-4 text-gray-400">No</td>
+                    <td class="py-3 pr-4 font-mono text-xs text-gray-500">20</td>
+                    <td class="py-3 text-gray-600">Maximum vendors to return. Range: 1–50.</td>
                   </tr>
                   <tr class="align-top">
-                    <td class="py-2.5 pr-4 font-mono text-blue-700 text-xs">limit</td>
-                    <td class="py-2.5 pr-4 text-gray-500">number</td>
-                    <td class="py-2.5 pr-4 text-gray-400">No</td>
-                    <td class="py-2.5 text-gray-600">Results per page. Default: <code class="bg-gray-100 px-1 rounded text-xs">12</code>. Max: 50.</td>
+                    <td class="py-3 pr-4 font-mono text-blue-700 text-xs">sort_by</td>
+                    <td class="py-3 pr-4 text-gray-500">string</td>
+                    <td class="py-3 pr-4 text-gray-400">No</td>
+                    <td class="py-3 pr-4 font-mono text-xs text-gray-500">"distance"</td>
+                    <td class="py-3 text-gray-600">Sort order: <code class="bg-gray-100 px-1 rounded text-xs">distance</code> · <code class="bg-gray-100 px-1 rounded text-xs">vendor_score</code> · <code class="bg-gray-100 px-1 rounded text-xs">rating</code> · <code class="bg-gray-100 px-1 rounded text-xs">review_count</code></td>
                   </tr>
                   <tr class="align-top">
-                    <td class="py-2.5 pr-4 font-mono text-blue-700 text-xs">page</td>
-                    <td class="py-2.5 pr-4 text-gray-500">number</td>
-                    <td class="py-2.5 pr-4 text-gray-400">No</td>
-                    <td class="py-2.5 text-gray-600">Page number, 1-indexed. Default: <code class="bg-gray-100 px-1 rounded text-xs">1</code>.</td>
+                    <td class="py-3 pr-4 font-mono text-blue-700 text-xs">get_quotes</td>
+                    <td class="py-3 pr-4 text-gray-500">boolean</td>
+                    <td class="py-3 pr-4 text-gray-400">No</td>
+                    <td class="py-3 pr-4 font-mono text-xs text-gray-500">false</td>
+                    <td class="py-3 text-gray-600">When <code class="bg-gray-100 px-1 rounded text-xs">true</code>, Vendora contacts vendors (phone calls + emails) and returns quote results. See <a href="#doc-quotes" class="text-blue-600 hover:underline">Request Quotes</a>.</td>
+                  </tr>
+                  <tr class="align-top">
+                    <td class="py-3 pr-4 font-mono text-blue-700 text-xs">vendor_ids</td>
+                    <td class="py-3 pr-4 text-gray-500">string[]</td>
+                    <td class="py-3 pr-4 text-gray-400">No</td>
+                    <td class="py-3 pr-4 font-mono text-xs text-gray-500">null</td>
+                    <td class="py-3 text-gray-600">Used with <code class="bg-gray-100 px-1 rounded text-xs">get_quotes: true</code>. Contact only these specific vendor IDs instead of the top search results. Max 10.</td>
+                  </tr>
+                  <tr class="align-top">
+                    <td class="py-3 pr-4 font-mono text-blue-700 text-xs">urgency</td>
+                    <td class="py-3 pr-4 text-gray-500">string</td>
+                    <td class="py-3 pr-4 text-gray-400">No</td>
+                    <td class="py-3 pr-4 font-mono text-xs text-gray-500">"normal"</td>
+                    <td class="py-3 text-gray-600">Passed to vendors in the call script: <code class="bg-gray-100 px-1 rounded text-xs">normal</code> · <code class="bg-gray-100 px-1 rounded text-xs">urgent</code> · <code class="bg-gray-100 px-1 rounded text-xs">scheduled</code></td>
+                  </tr>
+                  <tr class="align-top">
+                    <td class="py-3 pr-4 font-mono text-blue-700 text-xs">max_vendors_to_call</td>
+                    <td class="py-3 pr-4 text-gray-500">number</td>
+                    <td class="py-3 pr-4 text-gray-400">No</td>
+                    <td class="py-3 pr-4 font-mono text-xs text-gray-500">3</td>
+                    <td class="py-3 text-gray-600">When <code class="bg-gray-100 px-1 rounded text-xs">get_quotes: true</code> and no <code class="bg-gray-100 px-1 rounded text-xs">vendor_ids</code>, how many top vendors to contact. Range: 1–20.</td>
+                  </tr>
+                  <tr class="align-top">
+                    <td class="py-3 pr-4 font-mono text-blue-700 text-xs">requester_name</td>
+                    <td class="py-3 pr-4 text-gray-500">string</td>
+                    <td class="py-3 pr-4 text-gray-400">No</td>
+                    <td class="py-3 pr-4 font-mono text-xs text-gray-500">null</td>
+                    <td class="py-3 text-gray-600">Name of the property manager or requester, used in the vendor call script.</td>
                   </tr>
                 </tbody>
               </table>
@@ -514,52 +592,156 @@ GET /v2/vendors?api_key=vnd_your_api_key_here&address=...</div>
           </div>
         </section>
 
-        <!-- Vendor object -->
-        <section class="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-6">
+        <!-- ── Response Schema ───────────────────────────────────────────── -->
+        <section id="doc-schema" class="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-6">
           <div class="bg-gray-50 border-b border-gray-200 px-6 py-3">
-            <h3 class="font-semibold text-sm text-gray-800">Response Schema</h3>
+            <h3 class="font-semibold text-sm text-gray-800">Response — Search Mode <span class="text-gray-400 font-normal">(get_quotes: false)</span></h3>
           </div>
           <div class="p-6">
             <div class="code">{
-  <span class="kw">"vendors"</span>: [
-    {
-      <span class="kw">"vendor_id"</span>:              <span class="str">"uuid"</span>,
-      <span class="kw">"canonical_name"</span>:         <span class="str">"Joe's Plumbing LLC"</span>,
-      <span class="kw">"city"</span>:                   <span class="str">"Newark"</span>,
-      <span class="kw">"state"</span>:                  <span class="str">"NJ"</span>,
-      <span class="kw">"zip"</span>:                    <span class="str">"07102"</span>,
-      <span class="kw">"primary_phone"</span>:          <span class="str">"9735551234"</span>,
-      <span class="kw">"website_url"</span>:            <span class="str">"https://joesplumbing.com"</span>,
-      <span class="kw">"is_onboarded"</span>:          <span class="val">true</span>,
-      <span class="kw">"is_licensed"</span>:           <span class="val">true</span>,
-      <span class="kw">"is_insured"</span>:            <span class="val">true</span>,
-      <span class="kw">"vendor_score"</span>:          <span class="val">84.5</span>,
-      <span class="kw">"score_tier"</span>:            <span class="str">"A"</span>,
-      <span class="kw">"category_display_name"</span>:  <span class="str">"General Plumbing"</span>,
-      <span class="kw">"category_code"</span>:         <span class="str">"PLB.GEN"</span>,
-      <span class="kw">"distance_miles"</span>:        <span class="val">3.2</span>   <span class="cmt">// null if not yet geocoded</span>
-    }
-  ],
-  <span class="kw">"total"</span>:          <span class="val">127</span>,
-  <span class="kw">"page"</span>:           <span class="val">1</span>,
-  <span class="kw">"limit"</span>:          <span class="val">12</span>,
-  <span class="kw">"radius_miles"</span>:   <span class="val">25</span>,
-  <span class="kw">"search_center"</span>: {
-    <span class="kw">"lat"</span>: <span class="val">40.7357</span>,
-    <span class="kw">"lng"</span>: <span class="val">-74.1724</span>,
-    <span class="kw">"formatted_address"</span>: <span class="str">"Newark, Essex County, NJ, USA"</span>
+  <span class="kw">"total"</span>:            <span class="val">47</span>,            <span class="cmt">// total vendors matched in radius</span>
+  <span class="kw">"vendors"</span>:          [ <span class="cmt">/* vendor objects — see below */</span> ],
+  <span class="kw">"matched_category"</span>: <span class="str">"PLB.GEN"</span>,    <span class="cmt">// AI-detected category code</span>
+  <span class="kw">"category_label"</span>:   <span class="str">"General Plumbing"</span>,
+  <span class="kw">"region"</span>: {
+    <span class="kw">"address"</span>:      <span class="str">"123 Main St Newark NJ"</span>,
+    <span class="kw">"lat"</span>:          <span class="val">40.7357</span>,
+    <span class="kw">"lng"</span>:          <span class="val">-74.1724</span>,
+    <span class="kw">"radius_miles"</span>: <span class="val">25</span>
   }
 }</div>
           </div>
         </section>
 
-        <!-- Code examples -->
-        <section class="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-6">
+        <!-- ── Vendor Object ──────────────────────────────────────────────── -->
+        <section id="doc-vendor" class="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-6">
+          <div class="bg-gray-50 border-b border-gray-200 px-6 py-3">
+            <h3 class="font-semibold text-sm text-gray-800">Vendor Object</h3>
+          </div>
+          <div class="p-6">
+            <div class="code">{
+  <span class="kw">"vendor_id"</span>:             <span class="str">"3fa85f64-5717-4562-b3fc-2c963f66afa6"</span>,
+  <span class="kw">"canonical_name"</span>:        <span class="str">"Joe's Plumbing LLC"</span>,
+  <span class="kw">"primary_category_code"</span>: <span class="str">"PLB.GEN"</span>,
+  <span class="kw">"category_display_name"</span>: <span class="str">"General Plumbing"</span>,
+  <span class="kw">"score_tier"</span>:            <span class="str">"A"</span>,           <span class="cmt">// A/B/C/D/F or null</span>
+  <span class="kw">"vendor_score"</span>:          <span class="val">84.5</span>,         <span class="cmt">// 0–100 composite score</span>
+  <span class="kw">"is_licensed"</span>:           <span class="val">true</span>,
+  <span class="kw">"is_insured"</span>:            <span class="val">true</span>,
+  <span class="kw">"is_onboarded"</span>:          <span class="val">false</span>,        <span class="cmt">// onboarded = registered Vendora partner</span>
+  <span class="kw">"primary_phone"</span>:         <span class="str">"+19735551234"</span>,  <span class="cmt">// E.164 format, or null</span>
+  <span class="kw">"website_url"</span>:           <span class="str">"https://joesplumbing.com"</span>,
+  <span class="kw">"city"</span>:                  <span class="str">"Newark"</span>,
+  <span class="kw">"state"</span>:                 <span class="str">"NJ"</span>,
+  <span class="kw">"zip"</span>:                   <span class="str">"07102"</span>,
+  <span class="kw">"distance_miles"</span>:        <span class="val">3.2</span>,          <span class="cmt">// null if address could not be geocoded</span>
+  <span class="kw">"avg_rating"</span>:            <span class="val">4.7</span>,          <span class="cmt">// 1–5, or null</span>
+  <span class="kw">"total_review_count"</span>:    <span class="val">52</span>,
+  <span class="kw">"years_in_business"</span>:     <span class="val">12</span>            <span class="cmt">// or null</span>
+}</div>
+          </div>
+        </section>
+
+        <!-- ── Request Quotes ─────────────────────────────────────────────── -->
+        <section id="doc-quotes" class="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-6">
+          <div class="bg-gray-50 border-b border-gray-200 px-6 py-3 flex items-center gap-3">
+            <span class="bg-purple-600 text-white text-xs font-bold px-2 py-0.5 rounded">POST</span>
+            <span class="font-mono text-sm text-gray-800">/v3/vendors/search</span>
+            <span class="text-gray-500 text-sm">with <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">get_quotes: true</code></span>
+          </div>
+          <div class="p-6">
+            <p class="text-sm text-gray-600 mb-5">
+              When <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">get_quotes: true</code>, Vendora contacts vendors automatically after finding them.
+              Non-onboarded vendors receive an AI phone call (via VAPI). Onboarded partners receive a bid request email.
+              A <strong>24-hour cooldown</strong> per vendor prevents duplicate contacts — use <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">vendor_ids</code> to target specific vendors and bypass the search filter.
+            </p>
+
+            <h3 class="text-sm font-semibold text-gray-700 mb-3">Response — Quotes Mode</h3>
+            <div class="code mb-5">{
+  <span class="kw">"quote_request_id"</span>:  <span class="str">"uuid"</span>,           <span class="cmt">// tracks this quote batch</span>
+  <span class="kw">"vendors_called"</span>:    <span class="val">3</span>,
+  <span class="kw">"vendors_emailed"</span>:   <span class="val">1</span>,
+  <span class="kw">"quotes_requested"</span>:  <span class="val">true</span>,
+  <span class="kw">"quote_results"</span>: [
+    {
+      <span class="kw">"vendor_id"</span>: <span class="str">"uuid"</span>,
+      <span class="kw">"name"</span>:      <span class="str">"Joe's Plumbing LLC"</span>,
+      <span class="kw">"status"</span>:    <span class="str">"initiated"</span>,   <span class="cmt">// see statuses below</span>
+      <span class="kw">"type"</span>:      <span class="str">"vapi_call"</span>,  <span class="cmt">// "vapi_call" | "bid_email"</span>
+      <span class="kw">"phone"</span>:     <span class="str">"+19735551234"</span>,
+      <span class="kw">"city"</span>:      <span class="str">"Newark"</span>
+    }
+  ],
+  <span class="cmt">// ... plus all search fields (total, vendors, matched_category, region)</span>
+}</div>
+
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">Quote Result Statuses</h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide border-b border-gray-100">
+                    <th class="pb-2 pr-6">Status</th>
+                    <th class="pb-2">Meaning</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                  <tr><td class="py-2.5 pr-6 font-mono text-xs text-emerald-700">initiated</td><td class="py-2.5 text-sm text-gray-600">AI call or bid email successfully dispatched</td></tr>
+                  <tr><td class="py-2.5 pr-6 font-mono text-xs text-emerald-700">bid_request_sent</td><td class="py-2.5 text-sm text-gray-600">Bid request email sent to onboarded partner vendor</td></tr>
+                  <tr><td class="py-2.5 pr-6 font-mono text-xs text-amber-700">cooldown</td><td class="py-2.5 text-sm text-gray-600">Vendor was contacted within the last 24 hours — skipped</td></tr>
+                  <tr><td class="py-2.5 pr-6 font-mono text-xs text-gray-500">no_phone</td><td class="py-2.5 text-sm text-gray-600">Vendor has no phone number on record — skipped</td></tr>
+                  <tr><td class="py-2.5 pr-6 font-mono text-xs text-red-600">error</td><td class="py-2.5 text-sm text-gray-600">Contact attempt failed (see <code class="bg-gray-100 px-1 rounded text-xs">error</code> field for detail)</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── Category Detection ─────────────────────────────────────────── -->
+        <section class="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+          <h2 class="font-semibold text-gray-900 mb-2">AI Category Detection</h2>
+          <p class="text-sm text-gray-600 mb-4">
+            Vendora uses an LLM to classify the job category from the <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">description</code> field. You do not need to pick a category — just describe the problem naturally.
+          </p>
+          <div class="grid grid-cols-2 gap-x-8 gap-y-1 text-xs font-mono text-gray-600">
+            <span><span class="text-blue-700">PLB.GEN</span> — General Plumbing</span>
+            <span><span class="text-blue-700">PLB.DRN</span> — Drain &amp; Rooter</span>
+            <span><span class="text-blue-700">PLB.WHR</span> — Water Heater</span>
+            <span><span class="text-blue-700">PLB.EMR</span> — Emergency Plumbing</span>
+            <span><span class="text-blue-700">ELC.GEN</span> — General Electrical</span>
+            <span><span class="text-blue-700">ELC.LTG</span> — Lighting</span>
+            <span><span class="text-blue-700">ELC.PNL</span> — Panel / Breaker</span>
+            <span><span class="text-blue-700">HVA.AC</span> — Air Conditioning</span>
+            <span><span class="text-blue-700">HVA.HTG</span> — Heating / Furnace</span>
+            <span><span class="text-blue-700">APP.GEN</span> — Appliance Repair</span>
+            <span><span class="text-blue-700">CPT.GEN</span> — Carpentry / Drywall</span>
+            <span><span class="text-blue-700">LCK.GEN</span> — Locksmith</span>
+            <span><span class="text-blue-700">ROF.GEN</span> — Roofing</span>
+            <span><span class="text-blue-700">PNT.GEN</span> — Painting</span>
+            <span><span class="text-blue-700">FLR.GEN</span> — Flooring</span>
+            <span><span class="text-blue-700">GEN.HDY</span> — General Handyman</span>
+          </div>
+          <p class="text-xs text-gray-400 mt-3">Full category list is available on request. Unrecognized descriptions fall back to <code class="bg-gray-100 px-1 rounded">GEN.HDY</code>.</p>
+        </section>
+
+        <!-- ── Score Tiers ────────────────────────────────────────────────── -->
+        <section id="doc-tiers" class="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
+          <h2 class="font-semibold text-gray-900 mb-2">Vendor Score &amp; Tiers</h2>
+          <p class="text-sm text-gray-600 mb-4">Each vendor receives a composite <strong>Vendora Score</strong> (0–100) based on licensing status, insurance, BBB accreditation, years in business, and customer reviews. The score maps to a letter tier.</p>
+          <div class="space-y-2">
+            <div class="flex items-center gap-3"><span class="badge-a px-3 py-1 rounded-full text-sm font-semibold w-32 text-center">A · 80–100</span><span class="text-sm text-gray-600">Excellent — licensed, insured, high reviews, long track record</span></div>
+            <div class="flex items-center gap-3"><span class="badge-b px-3 py-1 rounded-full text-sm font-semibold w-32 text-center">B · 65–79</span><span class="text-sm text-gray-600">Good — meets most quality criteria</span></div>
+            <div class="flex items-center gap-3"><span class="badge-c px-3 py-1 rounded-full text-sm font-semibold w-32 text-center">C · 50–64</span><span class="text-sm text-gray-600">Average — some gaps in credentials or reviews</span></div>
+            <div class="flex items-center gap-3"><span class="badge-d px-3 py-1 rounded-full text-sm font-semibold w-32 text-center">D · 35–49</span><span class="text-sm text-gray-600">Below average — limited verifiable information</span></div>
+            <div class="flex items-center gap-3"><span class="badge-f px-3 py-1 rounded-full text-sm font-semibold w-32 text-center">F · 0–34</span><span class="text-sm text-gray-600">Poor — not recommended</span></div>
+          </div>
+        </section>
+
+        <!-- ── Code Examples ─────────────────────────────────────────────── -->
+        <section id="doc-examples" class="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-6">
           <div class="border-b border-gray-200 px-6 py-3">
             <h3 class="font-semibold text-sm text-gray-800">Code Examples</h3>
           </div>
           <div class="p-6 space-y-4">
-            <!-- Tabs -->
             <div class="flex bg-gray-100 rounded-lg p-1 w-fit gap-1">
               <button onclick="switchCodeTab('curl')" id="codetab-curl"
                 class="px-3 py-1.5 text-xs font-medium rounded-md">cURL</button>
@@ -568,66 +750,171 @@ GET /v2/vendors?api_key=vnd_your_api_key_here&address=...</div>
               <button onclick="switchCodeTab('python')" id="codetab-python"
                 class="px-3 py-1.5 text-xs font-medium rounded-md">Python</button>
             </div>
-            <div id="code-curl" class="code"><span class="kw">curl</span> -X GET \
-  <span class="str">"http://45.77.79.14/v2/vendors?address=123+Main+St+Newark+NJ&radius=25&category=PLB"</span> \
-  -H <span class="str">"Authorization: Bearer vnd_your_api_key_here"</span></div>
-            <div id="code-js" class="code hidden"><span class="kw">const</span> res = <span class="kw">await</span> fetch(
-  <span class="str">'http://45.77.79.14/v2/vendors?'</span> + <span class="kw">new</span> URLSearchParams({
-    address:  <span class="str">'123 Main St Newark NJ'</span>,
-    radius:   <span class="val">25</span>,
-    category: <span class="str">'PLB'</span>,
-    limit:    <span class="val">10</span>,
-  }),
-  { headers: { <span class="str">'Authorization'</span>: <span class="str">'Bearer vnd_your_api_key_here'</span> } }
-);
-<span class="kw">const</span> { vendors, total, search_center } = <span class="kw">await</span> res.json();
-console.log(<span class="str">`Found ${total} vendors near ${search_center.formatted_address}`</span>);</div>
-            <div id="code-python" class="code hidden"><span class="kw">import</span> requests
 
-resp = requests.get(
-    <span class="str">'http://45.77.79.14/v2/vendors'</span>,
-    params={
-        <span class="str">'address'</span>:  <span class="str">'123 Main St Newark NJ'</span>,
-        <span class="str">'radius'</span>:   <span class="val">25</span>,
-        <span class="str">'category'</span>: <span class="str">'PLB'</span>,
-        <span class="str">'limit'</span>:    <span class="val">10</span>,
+            <!-- cURL -->
+            <div id="code-curl" class="space-y-4">
+              <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Search vendors</p>
+              <div class="code"><span class="kw">curl</span> -X POST http://45.77.79.14/v3/vendors/search   -H <span class="str">"Authorization: Bearer vnd_your_api_key_here"</span>   -H <span class="str">"Content-Type: application/json"</span>   -d <span class="str">'{
+    "description": "kitchen faucet is dripping constantly",
+    "address": "123 Main St Newark NJ 07102",
+    "radius": 25,
+    "limit": 10
+  }'</span></div>
+              <p class="text-xs text-gray-500 font-medium uppercase tracking-wide mt-4">Search + request quotes from 3 vendors</p>
+              <div class="code"><span class="kw">curl</span> -X POST http://45.77.79.14/v3/vendors/search   -H <span class="str">"Authorization: Bearer vnd_your_api_key_here"</span>   -H <span class="str">"Content-Type: application/json"</span>   -d <span class="str">'{
+    "description": "kitchen faucet is dripping constantly",
+    "address": "123 Main St Newark NJ 07102",
+    "get_quotes": true,
+    "max_vendors_to_call": 3
+  }'</span></div>
+            </div>
+
+            <!-- JavaScript -->
+            <div id="code-js" class="space-y-4 hidden">
+              <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Search vendors</p>
+              <div class="code"><span class="kw">const</span> res = <span class="kw">await</span> fetch(<span class="str">'http://45.77.79.14/v3/vendors/search'</span>, {
+  method:  <span class="str">'POST'</span>,
+  headers: {
+    <span class="str">'Authorization'</span>: <span class="str">'Bearer vnd_your_api_key_here'</span>,
+    <span class="str">'Content-Type'</span>:  <span class="str">'application/json'</span>,
+  },
+  body: JSON.stringify({
+    description: <span class="str">'kitchen faucet is dripping constantly'</span>,
+    address:     <span class="str">'123 Main St Newark NJ 07102'</span>,
+    radius:      <span class="val">25</span>,
+    limit:       <span class="val">10</span>,
+  }),
+});
+
+<span class="kw">const</span> { vendors, total, matched_category, category_label } = <span class="kw">await</span> res.json();
+console.log(<span class="str">`${total} ${category_label} vendors found`</span>);
+vendors.forEach(v =&gt; console.log(v.canonical_name, v.distance_miles + <span class="str">' mi'</span>));</div>
+              <p class="text-xs text-gray-500 font-medium uppercase tracking-wide mt-4">Request quotes from specific vendors</p>
+              <div class="code"><span class="kw">const</span> res = <span class="kw">await</span> fetch(<span class="str">'http://45.77.79.14/v3/vendors/search'</span>, {
+  method:  <span class="str">'POST'</span>,
+  headers: {
+    <span class="str">'Authorization'</span>: <span class="str">'Bearer vnd_your_api_key_here'</span>,
+    <span class="str">'Content-Type'</span>:  <span class="str">'application/json'</span>,
+  },
+  body: JSON.stringify({
+    description: <span class="str">'kitchen faucet is dripping constantly'</span>,
+    address:     <span class="str">'123 Main St Newark NJ 07102'</span>,
+    get_quotes:  <span class="val">true</span>,
+    vendor_ids:  [<span class="str">'uuid-1'</span>, <span class="str">'uuid-2'</span>, <span class="str">'uuid-3'</span>],
+    urgency:     <span class="str">'normal'</span>,
+  }),
+});
+
+<span class="kw">const</span> { vendors_called, vendors_emailed, quote_results } = <span class="kw">await</span> res.json();
+console.log(<span class="str">`Called: ${vendors_called}, Emailed: ${vendors_emailed}`</span>);</div>
+            </div>
+
+            <!-- Python -->
+            <div id="code-python" class="space-y-4 hidden">
+              <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">Search vendors</p>
+              <div class="code"><span class="kw">import</span> requests
+
+VENDORA_KEY = <span class="str">"vnd_your_api_key_here"</span>
+HEADERS = {
+    <span class="str">"Authorization"</span>: <span class="str">f"Bearer {VENDORA_KEY}"</span>,
+    <span class="str">"Content-Type"</span>:  <span class="str">"application/json"</span>,
+}
+
+resp = requests.post(
+    <span class="str">"http://45.77.79.14/v3/vendors/search"</span>,
+    json={
+        <span class="str">"description"</span>: <span class="str">"kitchen faucet is dripping constantly"</span>,
+        <span class="str">"address"</span>:     <span class="str">"123 Main St Newark NJ 07102"</span>,
+        <span class="str">"radius"</span>:      <span class="val">25</span>,
+        <span class="str">"limit"</span>:       <span class="val">10</span>,
     },
-    headers={<span class="str">'Authorization'</span>: <span class="str">'Bearer vnd_your_api_key_here'</span>},
+    headers=HEADERS,
 )
 data = resp.json()
-print(<span class="str">f"Found {data['total']} vendors near {data['search_center']['formatted_address']}"</span>)</div>
+print(<span class="str">f"Found {data['total']} {data['category_label']} vendors"</span>)
+<span class="kw">for</span> v <span class="kw">in</span> data[<span class="str">"vendors"</span>]:
+    print(<span class="str">f"  {v['canonical_name']} — {v['distance_miles']} mi ({v['score_tier']})"</span>)</div>
+              <p class="text-xs text-gray-500 font-medium uppercase tracking-wide mt-4">Request quotes</p>
+              <div class="code">resp = requests.post(
+    <span class="str">"http://45.77.79.14/v3/vendors/search"</span>,
+    json={
+        <span class="str">"description"</span>:   <span class="str">"kitchen faucet is dripping constantly"</span>,
+        <span class="str">"address"</span>:       <span class="str">"123 Main St Newark NJ 07102"</span>,
+        <span class="str">"get_quotes"</span>:    <span class="val">True</span>,
+        <span class="str">"vendor_ids"</span>:    [<span class="str">"uuid-1"</span>, <span class="str">"uuid-2"</span>],
+    },
+    headers=HEADERS,
+)
+data = resp.json()
+print(<span class="str">f"Called: {data['vendors_called']}, Emailed: {data['vendors_emailed']}"</span>)
+<span class="kw">for</span> r <span class="kw">in</span> data[<span class="str">"quote_results"</span>]:
+    print(<span class="str">f"  {r['name']} → {r['status']}"</span>)</div>
+            </div>
           </div>
         </section>
 
-        <!-- Score tiers -->
-        <section class="bg-white rounded-2xl border border-gray-200 p-6 mb-6">
-          <h2 class="font-semibold text-gray-900 mb-3">Score Tiers</h2>
-          <p class="text-sm text-gray-600 mb-4">Each vendor receives a composite score (0–100) based on licensing, insurance, BBB rating, years in business, and customer reviews. The score is bucketed into a letter grade.</p>
-          <div class="flex flex-wrap gap-3">
-            <span class="badge-a px-3 py-1.5 rounded-full text-sm font-semibold">A — 80–100 · Excellent</span>
-            <span class="badge-b px-3 py-1.5 rounded-full text-sm font-semibold">B — 65–79 · Good</span>
-            <span class="badge-c px-3 py-1.5 rounded-full text-sm font-semibold">C — 50–64 · Average</span>
-            <span class="badge-d px-3 py-1.5 rounded-full text-sm font-semibold">D — 35–49 · Below avg</span>
-            <span class="badge-f px-3 py-1.5 rounded-full text-sm font-semibold">F — 0–34 · Poor</span>
+        <!-- ── Error Codes ────────────────────────────────────────────────── -->
+        <section id="doc-errors" class="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-6">
+          <div class="bg-gray-50 border-b border-gray-200 px-6 py-3">
+            <h3 class="font-semibold text-sm text-gray-800">HTTP Status Codes</h3>
+          </div>
+          <div class="p-6">
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="text-left text-xs font-semibold text-gray-400 uppercase tracking-wide border-b border-gray-100">
+                    <th class="pb-2 pr-6">Code</th>
+                    <th class="pb-2 pr-6">Meaning</th>
+                    <th class="pb-2">Common Cause</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-50">
+                  <tr>
+                    <td class="py-2.5 pr-6 font-mono text-xs text-emerald-700">200</td>
+                    <td class="py-2.5 pr-6 text-gray-700 font-medium">OK</td>
+                    <td class="py-2.5 text-gray-500">Request succeeded</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2.5 pr-6 font-mono text-xs text-amber-700">400</td>
+                    <td class="py-2.5 pr-6 text-gray-700 font-medium">Bad Request</td>
+                    <td class="py-2.5 text-gray-500">Missing required field (<code class="bg-gray-100 px-1 rounded text-xs">description</code> or <code class="bg-gray-100 px-1 rounded text-xs">address</code>), or invalid parameter value</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2.5 pr-6 font-mono text-xs text-red-600">401</td>
+                    <td class="py-2.5 pr-6 text-gray-700 font-medium">Unauthorized</td>
+                    <td class="py-2.5 text-gray-500">Missing, invalid, or revoked API key</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2.5 pr-6 font-mono text-xs text-red-600">500</td>
+                    <td class="py-2.5 pr-6 text-gray-700 font-medium">Server Error</td>
+                    <td class="py-2.5 text-gray-500">Unexpected error — the response body contains an <code class="bg-gray-100 px-1 rounded text-xs">error</code> field with details</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="code mt-4"><span class="cmt">// Error response shape</span>
+{ <span class="kw">"error"</span>: <span class="str">"description is required"</span> }</div>
           </div>
         </section>
 
-        <!-- Rate limits -->
+        <!-- ── Limits ─────────────────────────────────────────────────────── -->
         <section class="bg-white rounded-2xl border border-gray-200 p-6">
-          <h2 class="font-semibold text-gray-900 mb-3">Rate Limits &amp; Limits</h2>
+          <h2 class="font-semibold text-gray-900 mb-3">Limits</h2>
           <div class="space-y-2 text-sm text-gray-600">
-            <p>• <strong>5 API keys</strong> per developer account</p>
-            <p>• <strong>50 results max</strong> per request (use <code class="bg-gray-100 px-1 rounded">page</code> for pagination)</p>
-            <p>• <strong>200 miles max</strong> radius per request</p>
-            <p>• Rate limiting will be introduced in a future release. Please avoid more than 10 requests/second.</p>
+            <p>&#x2022; <strong>5 API keys</strong> per developer account</p>
+            <p>&#x2022; <strong>50 vendors max</strong> returned per request</p>
+            <p>&#x2022; <strong>200 miles max</strong> search radius</p>
+            <p>&#x2022; <strong>10 vendor IDs max</strong> in <code class="bg-gray-100 px-1 rounded text-xs">vendor_ids</code></p>
+            <p>&#x2022; <strong>24-hour cooldown</strong> per vendor — prevents duplicate quote requests</p>
+            <p>&#x2022; Please keep requests under <strong>10 per second</strong>. Rate limiting will be enforced in a future release.</p>
           </div>
         </section>
+
       </div>
 
-    </main>
-  </div>
-</div>
+      
 
+    </main>
 <!-- ═══ KEY REVEAL MODAL ═════════════════════════════════════════════════════ -->
 <div id="modal-key" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
   <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 fade-in">
@@ -697,13 +984,38 @@ let activeSection = '';
 let _modalKey = '';
 
 // ── Bootstrap ────────────────────────────────────────────────────────────────
-(function init() {
-  if (token) {
-    showDashboard();
-  } else {
-    showLanding();
-  }
+(async function init() {
   switchCodeTab('curl');
+  if (token) { showDashboard(); return; }
+
+  // Auto-link admin or vendor session -> exchange for a dev token
+  const bridgeToken = localStorage.getItem('vendora_admin_token') || localStorage.getItem('vendora_vendor_token');
+  if (bridgeToken) {
+    try {
+      const r = await fetch('/dev/link-account', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + bridgeToken }
+      });
+      if (r.ok) {
+        const d = await r.json();
+        token = d.token;
+        localStorage.setItem('dev_token', token);
+        showDashboard();
+        return;
+      }
+      // Token rejected (stale/wrong secret) - clear it and redirect to login
+      localStorage.removeItem('vendora_admin_token');
+      localStorage.removeItem('vendora_vendor_token');
+      window.location.href = '/login.html?redirect=developer.html';
+      return;
+    } catch {
+      window.location.href = '/login.html?redirect=developer.html';
+      return;
+    }
+  }
+
+  // Not logged in at all — go to login
+  window.location.href = '/login.html?redirect=developer.html';
 })();
 
 // ── Views ────────────────────────────────────────────────────────────────────
@@ -733,7 +1045,7 @@ function showSection(name) {
     else        { show('nav-auth-btns'); hide('nav-user-btns'); }
   }
   activeSection = name;
-  ['keys','tryit','docs'].forEach(s => {
+  ['keys','vendors','docs'].forEach(s => {
     const panel = document.getElementById('panel-' + s);
     const btn   = document.getElementById('sb-'    + s);
     if (panel) panel.classList.toggle('hidden', s !== name);
@@ -743,17 +1055,8 @@ function showSection(name) {
       btn.classList.toggle('text-gray-600', s !== name);
     }
   });
-  if (name === 'keys')   loadKeys();
-  if (name === 'tryit') {
-    // Pre-fill API key from session if the field is empty
-    const keyField = document.getElementById('try-apikey');
-    if (keyField && !keyField.value && token) {
-      keyField.placeholder = 'Key from your session (enter manually for external testing)';
-      const hint = document.getElementById('key-source-hint');
-      if (hint) hint.textContent = 'Using your current session token.';
-    }
-    updateCurlPreview();
-  }
+  if (name === 'keys')    loadKeys();
+  if (name === 'vendors') vsOnEnter();
 }
 
 // ── Auth ─────────────────────────────────────────────────────────────────────
@@ -901,7 +1204,7 @@ function updateCurlPreview() {
   if (q)        params.set('q',        q);
   if (category) params.set('category', category);
 
-  const url = `http://45.77.79.14/v2/vendors?${params}`;
+  const url = `http://45.77.79.14/v3/vendors/search`;
   const preview = document.getElementById('curl-preview');
   if (preview) {
     preview.textContent =
@@ -953,7 +1256,7 @@ async function doTryApi() {
 
   try {
     const t0  = Date.now();
-    const res = await fetch('/v2/vendors?' + params, {
+    const res = await fetch('/v3/vendors/search?' + params, {
       headers: { 'Authorization': 'Bearer ' + apiKey },
     });
     const ms   = Date.now() - t0;
@@ -1108,6 +1411,329 @@ function execCopy(text, cb) {
   catch { alert('Please select the key text and press Ctrl+C / Cmd+C'); }
   document.body.removeChild(ta);
 }
+
+// ── Request Quotes playground ─────────────────────────────────────────────────
+function buildQuoteBody() {
+  const desc    = (document.getElementById('q-description')?.value || '').trim();
+  const addr    = (document.getElementById('q-address')?.value     || '').trim();
+  const maxV    = parseInt(document.getElementById('q-max')?.value  || '3', 10);
+  const urgency = (document.getElementById('q-urgency')?.value      || '').trim();
+  const secret  = (document.getElementById('q-secret')?.value       || '').trim();
+  const body = { _secret: secret || 'leaseloft-quotes-2026', description: desc, address: addr, max_vendors: maxV, _test: true };
+  if (urgency) body.urgency = urgency;
+  return body;
+}
+
+function updateQuotePreview() {
+  const body = buildQuoteBody();
+  const el = document.getElementById('q-preview');
+  if (el) el.textContent = JSON.stringify(body, null, 2);
+}
+
+function copyQuoteBody() {
+  const body = buildQuoteBody();
+  navigator.clipboard.writeText(JSON.stringify(body, null, 2)).catch(() => {});
+}
+
+async function doSendQuoteRequest() {
+  const desc = (document.getElementById('q-description')?.value || '').trim();
+  const addr = (document.getElementById('q-address')?.value     || '').trim();
+  if (!desc) { alert('Description is required'); return; }
+  if (!addr) { alert('Address is required');     return; }
+
+  const btn    = document.getElementById('q-run-btn');
+  const status = document.getElementById('q-status');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Contacting vendors…';
+  status.textContent = 'This may take 10–30 seconds while VAPI accepts calls…';
+
+  try {
+    const res  = await fetch('/public/request-quotes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(buildQuoteBody()),
+    });
+    const data = await res.json();
+
+    // Raw JSON
+    document.getElementById('q-json-pre').textContent = JSON.stringify(data, null, 2);
+
+    if (data.error) {
+      status.textContent = '⚠ ' + data.error;
+    } else {
+      status.textContent = '';
+      // Summary
+      document.getElementById('q-res-category').textContent =
+        'Category detected: ' + (data.category || '—');
+      document.getElementById('q-res-contacted').textContent =
+        (data.vendors_contacted ?? data.vendors_called ?? 0) + ' vendor(s) contacted';
+      const called  = data.vendors_called  ?? 0;
+      const emailed = data.vendors_emailed ?? 0;
+      document.getElementById('q-res-breakdown').textContent =
+        `${called} called via AI · ${emailed} notified by email  |  ${data.vendors_found ?? 0} found nearby`;
+
+      // Vendor list
+      const grid = document.getElementById('q-vendor-list');
+      grid.innerHTML = '';
+      (data.vendors || []).forEach(v => {
+        const isOnboarded = v.type === 'onboarded';
+        const badgeClass  = isOnboarded
+          ? 'bg-green-100 text-green-700'
+          : 'bg-indigo-100 text-indigo-700';
+        const badgeText   = isOnboarded ? 'Onboarded → Email' : 'New → VAPI Call';
+        const statusColor = v.status === 'initiated' || v.status === 'bid_request_sent'
+          ? 'text-green-600' : v.status === 'failed' ? 'text-red-500' : 'text-gray-500';
+        grid.innerHTML += `
+          <div class="bg-white rounded-xl border border-gray-200 p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <div class="font-semibold text-gray-900 text-sm">${v.name || v.vendor_id}</div>
+                <div class="text-xs text-gray-400 mt-0.5">
+                  ${v.city || ''}${v.distance_miles != null ? ' · ' + v.distance_miles + ' mi' : ''}
+                  ${v.email ? ' · ' + v.email : v.phone || ''}
+                </div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <span class="text-xs font-semibold px-2 py-0.5 rounded-full ${badgeClass}">${badgeText}</span>
+                <span class="text-xs font-medium ${statusColor}">${v.status}</span>
+              </div>
+            </div>
+            ${v.error ? `<div class="text-xs text-red-500 mt-1">${v.error}</div>` : ''}
+          </div>`;
+      });
+
+      document.getElementById('q-results').classList.remove('hidden');
+    }
+  } catch (e) {
+    status.textContent = '⚠ Request failed: ' + e.message;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13
+           a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498
+           a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+    </svg> Send Quote Request`;
+  }
+}
+
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// Find Vendors panel
+// ═══════════════════════════════════════════════════════════════════════════════
+let vsLastRows = [];   // vendor rows from last search
+
+function vsOnEnter() {
+  // Auto-fill API key from session token if blank
+  const k = document.getElementById('vs-apikey');
+  if (k && !k.value && token) k.placeholder = 'Using session token — or paste a key below';
+}
+
+function vsPasteKey() {
+  const k = document.getElementById('vs-apikey');
+  if (!k) return;
+  if (token) { k.value = token; return; }
+  navigator.clipboard.readText().then(t => { if (t.trim()) k.value = t.trim(); }).catch(() => {});
+}
+
+function vsApiKey() {
+  const v = (document.getElementById('vs-apikey')?.value || '').trim();
+  return v || token || '';
+}
+
+async function doVendorSearch() {
+  const apiKey = vsApiKey();
+  const desc   = (document.getElementById('vs-description')?.value || '').trim();
+  const addr   = (document.getElementById('vs-address')?.value || '').trim();
+  const radius = parseFloat(document.getElementById('vs-radius')?.value  || 25);
+  const limit  = parseInt(document.getElementById('vs-limit')?.value   || 20);
+  const sortBy = document.getElementById('vs-sort')?.value || 'distance';
+
+  if (!apiKey) { alert('Please enter an API Key'); return; }
+  if (!desc)   { alert('Problem description is required'); return; }
+  if (!addr)   { alert('Property address is required'); return; }
+
+  const btn = document.getElementById('vs-search-btn');
+  const st  = document.getElementById('vs-search-status');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Searching…';
+  st.textContent = 'Classifying + geocoding…';
+  document.getElementById('vs-results').classList.add('hidden');
+  document.getElementById('vs-quote-results').classList.add('hidden');
+
+  try {
+    const res = await fetch('/v3/vendors/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({ description: desc, address: addr, radius, limit, sort_by: sortBy, get_quotes: false }),
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) { st.textContent = '⚠ ' + (data.error || res.statusText); return; }
+
+    vsLastRows = data.vendors || [];
+    const total = data.total ?? vsLastRows.length;
+    document.getElementById('vs-result-count').textContent  = `${total} vendor${total !== 1 ? 's' : ''} found`;
+    document.getElementById('vs-category-badge').textContent = `Category: ${data.category_label || data.matched_category || '—'}`;
+    document.getElementById('vs-results').classList.remove('hidden');
+    vsRenderCards(vsLastRows);
+    st.textContent = '';
+  } catch (err) {
+    st.textContent = '⚠ ' + err.message;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg> Search Vendors';
+  }
+}
+
+function vsEsc(s) {
+  return String(s || '').replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function vsRenderCards(vendors) {
+  const grid = document.getElementById('vs-vendor-cards');
+  grid.innerHTML = '';
+  if (!vendors.length) {
+    grid.innerHTML = '<div class="text-center py-10 text-gray-400">No vendors found.</div>';
+    return;
+  }
+  vendors.forEach(v => {
+    const hasPhone  = v.phone && v.phone !== 'null';
+    const dist      = v.distance_miles != null ? `${v.distance_miles} mi` : '';
+    const cat       = v.categories?.[0]?.title || '';
+    const rating    = v.rating ? `★ ${v.rating}` : '';
+    const onboarded = v.vendora?.is_onboarded;
+    grid.innerHTML += `
+      <label class="flex items-start gap-3 bg-white rounded-xl border border-gray-200 p-4
+                     cursor-pointer hover:border-blue-300 transition-all"
+             style="outline:none">
+        <input type="checkbox" data-vid="${vsEsc(v.id)}"
+          class="mt-0.5 w-4 h-4 rounded text-blue-600 focus:ring-blue-500 shrink-0 vs-vendor-cb"
+          onchange="vsUpdateSelection()"
+          ${hasPhone ? '' : 'disabled title="No phone — cannot call"'}>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-start justify-between gap-2">
+            <span class="font-semibold text-gray-900 text-sm leading-tight">${vsEsc(v.name)}</span>
+            <div class="flex items-center gap-1.5 shrink-0 text-xs font-semibold">
+              ${onboarded ? '<span class="bg-green-100 text-green-700 px-1.5 py-0.5 rounded">Onboarded</span>' : ''}
+              ${!hasPhone ? '<span class="bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">No phone</span>' : ''}
+            </div>
+          </div>
+          <div class="text-xs text-gray-400 mt-0.5">
+            ${[v.location?.city, cat, dist, rating].filter(Boolean).join(' · ')}
+          </div>
+        </div>
+      </label>`;
+  });
+  vsUpdateSelection();
+}
+
+function vsGetChecked() {
+  return [...document.querySelectorAll('.vs-vendor-cb:checked')];
+}
+
+function vsUpdateSelection() {
+  const checked = vsGetChecked();
+  if (checked.length > 10) { checked[checked.length - 1].checked = false; return vsUpdateSelection(); }
+  const cnt   = checked.length;
+  const badge = document.getElementById('vs-selected-count');
+  const bar   = document.getElementById('vs-quotes-bar');
+  const lbl   = document.getElementById('vs-quotes-btn-label');
+  badge.textContent = `${cnt} selected`;
+  badge.classList.toggle('hidden', cnt === 0);
+  bar.classList.toggle('hidden', cnt === 0);
+  if (lbl) lbl.textContent = cnt > 0 ? `Get Quotes for ${cnt} Vendor${cnt !== 1 ? 's' : ''}` : 'Get Quotes for Selected';
+}
+
+function vsSelectAll() {
+  const all = [...document.querySelectorAll('.vs-vendor-cb:not(:disabled)')];
+  all.slice(0, 10).forEach(b => b.checked = true);
+  vsUpdateSelection();
+}
+
+function vsClearAll() {
+  document.querySelectorAll('.vs-vendor-cb').forEach(b => b.checked = false);
+  vsUpdateSelection();
+}
+
+async function doGetQuotes() {
+  const apiKey     = vsApiKey();
+  const desc       = (document.getElementById('vs-description')?.value || '').trim();
+  const addr       = (document.getElementById('vs-address')?.value || '').trim();
+  const radius     = parseFloat(document.getElementById('vs-radius')?.value || 25);
+  const urgency    = document.getElementById('vs-urgency')?.value || 'normal';
+  const requester  = (document.getElementById('vs-requester')?.value || '').trim() || undefined;
+  const vendorIds  = vsGetChecked().map(b => b.dataset.vid);
+
+  if (!apiKey)         { alert('API Key is required'); return; }
+  if (!desc || !addr)  { alert('Run a search first'); return; }
+  if (!vendorIds.length){ alert('Select at least one vendor'); return; }
+
+  const btn = document.getElementById('vs-quotes-btn');
+  const st  = document.getElementById('vs-quotes-status');
+  btn.disabled = true;
+  btn.innerHTML = `<div class="spinner"></div> Calling ${vendorIds.length} vendor${vendorIds.length !== 1 ? 's' : ''}…`;
+  st.textContent = 'Initiating calls…';
+  document.getElementById('vs-quote-results').classList.add('hidden');
+
+  try {
+    const res = await fetch('/v3/vendors/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        description: desc, address: addr, radius,
+        limit: 50, get_quotes: true,
+        vendor_ids: vendorIds,
+        urgency, requester_name: requester,
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok || data.error) { st.textContent = '⚠ ' + (data.error || res.statusText); return; }
+
+    const called  = data.vendors_called  ?? 0;
+    const emailed = data.vendors_emailed ?? 0;
+    const results = data.quote_results   ?? [];
+    document.getElementById('vs-quote-summary').textContent =
+      `${called} call${called !== 1 ? 's' : ''} initiated · ${emailed} email${emailed !== 1 ? 's' : ''} sent`;
+    const rid = data.quote_request_id;
+    document.getElementById('vs-quote-request-id').textContent = rid ? `Request ID: ${rid}` : '';
+
+    const qCards = document.getElementById('vs-quote-cards');
+    qCards.innerHTML = '';
+    results.forEach(r => {
+      const ok  = r.status === 'initiated' || r.status === 'bid_request_sent';
+      const bad = r.status === 'failed' || r.status === 'error';
+      const col = ok ? 'text-green-600' : bad ? 'text-red-500' : 'text-gray-500';
+      const badge = r.type === 'onboarded'
+        ? '<span class="bg-green-100 text-green-700 text-xs font-semibold px-1.5 py-0.5 rounded">Onboarded → Email</span>'
+        : '<span class="bg-indigo-100 text-indigo-700 text-xs font-semibold px-1.5 py-0.5 rounded">New → Call</span>';
+      qCards.innerHTML += `
+        <div class="bg-white rounded-xl border border-gray-200 p-4">
+          <div class="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <div class="font-semibold text-gray-900 text-sm">${vsEsc(r.name || r.vendor_id)}</div>
+              <div class="text-xs text-gray-400 mt-0.5">${vsEsc(r.city || '')}${r.phone ? ' · '+r.phone : r.email ? ' · '+r.email : ''}</div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+              ${badge}
+              <span class="text-xs font-medium ${col}">${vsEsc(r.status)}</span>
+            </div>
+          </div>
+          ${r.error ? `<div class="text-xs text-red-500 mt-1">${vsEsc(r.error)}</div>` : ''}
+        </div>`;
+    });
+
+    document.getElementById('vs-quote-results').classList.remove('hidden');
+    st.textContent = '';
+  } catch (err) {
+    st.textContent = '⚠ ' + err.message;
+  } finally {
+    btn.disabled = false;
+    const cnt = vsGetChecked().length;
+    btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg> <span id="vs-quotes-btn-label">Get Quotes for ${cnt} Vendor${cnt !== 1 ? 's' : ''}</span>`;
+  }
+}
+
 </script>
 </body>
 </html>

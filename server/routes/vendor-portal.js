@@ -19,7 +19,7 @@ import jwt from 'jsonwebtoken';
 import { pool } from '../db.js';
 
 const router = Router();
-export const VENDOR_JWT_SECRET = process.env.JWT_SECRET || 'vendora-jwt-secret-change-in-prod';
+export const VENDOR_JWT_SECRET = process.env.JWT_SECRET || 'vendora-jwt-prod-2026-leaseloft';
 
 // ── Vendor JWT middleware ─────────────────────────────────────────────────────
 function requireVendorJwt(req, res, next) {
@@ -426,6 +426,412 @@ router.put('/bank-account', requireVendorJwt, async (req, res) => {
        account_type || 'checking', routing_number.trim(), last4]
     );
     res.json({ success: true });
+  } finally { client.release(); }
+});
+
+// -- POST /vendor/push-token
+router.post('/push-token', requireVendorJwt, async (req, res) => {
+  const { expo_token } = req.body;
+  if (!expo_token || !expo_token.startsWith('ExponentPushToken['))
+    return res.status(400).json({ error: 'Valid Expo push token required' });
+  const client = await pool.connect();
+  try {
+    await client.query(
+      `INSERT INTO vendor_push_tokens (vendor_id, expo_token)
+       VALUES ($1, $2)
+       ON CONFLICT (vendor_id, expo_token) DO NOTHING`,
+      [req.vendorUser.vendorId, expo_token]
+    );
+    res.json({ success: true });
+  } finally { client.release(); }
+});
+
+// -- GET /vendor/quote-requests
+router.get('/quote-requests', requireVendorJwt, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { rows } = await client.query(
+      `SELECT qrv.id, qrv.quote_request_id, qrv.status AS vendor_status,
+              qrv.quoted_amount, qrv.quote_message, qrv.quoted_at,
+              qr.category_label, qr.address, qr.city, qr.state,
+              qr.description, qr.property_type, qr.urgency,
+              qr.requester_name, qr.created_at
+       FROM quote_request_vendors qrv
+       JOIN quote_requests qr ON qr.quote_request_id = qrv.quote_request_id
+       WHERE qrv.vendor_id = $1
+       ORDER BY qr.created_at DESC
+       LIMIT 50`,
+      [req.vendorUser.vendorId]
+    );
+    res.json({ quote_requests: rows });
+  } finally { client.release(); }
+});
+
+// -- POST /vendor/quote-requests/:qrv_id/quote
+router.post('/quote-requests/:qrv_id/quote', requireVendorJwt, async (req, res) => {
+  const { qrv_id } = req.params;
+  const { message, amount } = req.body;
+  if (!message || !amount)
+    return res.status(400).json({ error: 'message and amount are required' });
+  const client = await pool.connect();
+  try {
+    const { rows } = await client.query(
+      `SELECT id, quote_request_id FROM quote_request_vendors
+       WHERE id = $1 AND vendor_id = $2`,
+      [qrv_id, req.vendorUser.vendorId]
+    );
+    if (!rows.length) return res.status(404).json({ error: 'Quote request not found' });
+    await client.query(
+      `UPDATE quote_request_vendors
+       SET status = 'quoted', quoted_amount = $1, quote_message = $2, quoted_at = NOW()
+       WHERE id = $3`,
+      [parseFloat(amount), message.trim(), qrv_id]
+    );
+    await client.query(
+      `UPDATE quote_requests SET quotes_received = quotes_received + 1
+       WHERE quote_request_id = $1`,
+      [rows[0].quote_request_id]
+    );
+    res.json({ success: true });
+  } finally { client.release(); }
+});
+
+
+
+// GET /vendor/quote-requests/:id/messages
+router.get('/quote-requests/:id/messages', requireVendorJwt, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { rows } = await client.query(
+      `SELECT m.message_id, m.sender_type, m.sender_id, m.body, m.created_at,
+              COALESCE(v.first_name || ' ' || v.last_name, 'Admin') AS sender_name
+       FROM rfq_messages m
+       LEFT JOIN vendor_portal_users v ON v.user_id = m.sender_id AND m.sender_type = 'vendor'
+       WHERE m.quote_request_id = $1
+       ORDER BY m.created_at ASC`,
+      [req.params.id]
+    );
+    res.json({ messages: rows });
+  } finally { client.release(); }
+});
+
+// POST /vendor/quote-requests/:id/messages
+router.post('/quote-requests/:id/messages', requireVendorJwt, async (req, res) => {
+  const { body } = req.body || {};
+  if (!body || !body.trim()) return res.status(400).json({ error: 'body required' });
+  const client = await pool.connect();
+  try {
+    const { rows } = await client.query(
+      `INSERT INTO rfq_messages (quote_request_id, sender_type, sender_id, body)
+       VALUES ($1, 'vendor', $2, $3) RETURNING *`,
+      [req.params.id, req.user.user_id, body.trim()]
+    );
+    res.json({ message: rows[0] });
+  } finally { client.release(); }
+});
+
+// POST /vendor/quote-requests/:id/pass
+router.post('/quote-requests/:id/pass', requireVendorJwt, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    // Find the qrv record for this vendor
+    const { rows: qrv } = await client.query(
+      `SELECT id FROM quote_request_vendors
+       WHERE quote_request_id = $1 AND vendor_id = (
+         SELECT vendor_id FROM vendor_portal_users WHERE user_id = $2
+       )`,
+      [req.params.id, req.user.user_id]
+    );
+    if (!qrv.length) return res.status(404).json({ error: 'RFQ not found for this vendor' });
+    await client.query(
+      `UPDATE quote_request_vendors SET status = 'passed' WHERE id = $1`,
+      [qrv[0].id]
+    );
+    // Insert a system message
+    await client.query(
+      `INSERT INTO rfq_messages (quote_request_id, sender_type, body) VALUES ($1, 'system', 'Vendor passed on this job')`,
+      [req.params.id]
+    );
+    res.json({ success: true });
+  } finally { client.release(); }
+});
+
+// GET /vendor/quotes/history
+router.get('/quotes/history', requireVendorJwt, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    const { rows } = await client.query(
+      `SELECT qrv.id, qrv.quote_request_id, qrv.status AS vendor_status,
+              qrv.quoted_amount, qrv.quote_message, qrv.quoted_at,
+              qr.category_label, qr.address, qr.city, qr.state, qr.description,
+              qr.property_type, qr.urgency, qr.requester_name, qr.created_at, qr.status AS rfq_status
+       FROM quote_request_vendors qrv
+       JOIN quote_requests qr ON qr.quote_request_id = qrv.quote_request_id
+       WHERE qrv.vendor_id = (SELECT vendor_id FROM vendor_portal_users WHERE user_id = $1)
+         AND qrv.status IN ('quoted','passed','accepted','declined','expired')
+       ORDER BY COALESCE(qrv.quoted_at, qrv.created_at) DESC
+       LIMIT 50`,
+      [req.user.user_id]
+    );
+    res.json({ history: rows });
+  } finally { client.release(); }
+});
+
+// PUT /vendor/profile
+router.put('/profile', requireVendorJwt, async (req, res) => {
+  const { first_name, last_name, phone, address, city, state, zip } = req.body || {};
+  const client = await pool.connect();
+  try {
+    if (first_name || last_name) {
+      await client.query(
+        `UPDATE vendor_portal_users SET first_name = COALESCE($1, first_name), last_name = COALESCE($2, last_name) WHERE user_id = $3`,
+        [first_name?.trim() || null, last_name?.trim() || null, req.user.user_id]
+      );
+    }
+    const { rows: vpu } = await client.query(`SELECT vendor_id FROM vendor_portal_users WHERE user_id = $1`, [req.user.user_id]);
+    if (vpu[0]?.vendor_id) {
+      await client.query(
+        `UPDATE vendors SET
+          canonical_name = COALESCE($1, canonical_name),
+          primary_phone = COALESCE($2, primary_phone),
+          street_address = COALESCE($3, street_address),
+          city = COALESCE($4, city),
+          state = COALESCE($5, state),
+          zip = COALESCE($6, zip),
+          updated_at = NOW()
+         WHERE vendor_id = $7`,
+        [
+          first_name && last_name ? `${first_name} ${last_name}` : null,
+          phone?.trim() || null,
+          address?.trim() || null,
+          city?.trim() || null,
+          state?.trim() || null,
+          zip?.trim() || null,
+          vpu[0].vendor_id
+        ]
+      );
+    }
+    const { rows } = await client.query(
+      `SELECT vpu.user_id, vpu.email, vpu.first_name, vpu.last_name,
+              v.canonical_name, v.primary_phone, v.street_address, v.city, v.state, v.zip, v.primary_category_code
+       FROM vendor_portal_users vpu LEFT JOIN vendors v ON v.vendor_id = vpu.vendor_id
+       WHERE vpu.user_id = $1`,
+      [req.user.user_id]
+    );
+    res.json(rows[0] || {});
+  } finally { client.release(); }
+});
+
+// POST /vendor/scan-card — extract vendor info from business card image
+router.post('/scan-card', requireVendorJwt, async (req, res) => {
+  const { image } = req.body || {};
+  if (!image) return res.status(400).json({ error: 'image (base64) required' });
+  const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
+  if (!ANTHROPIC_KEY) return res.status(503).json({ error: 'ANTHROPIC_API_KEY not configured' });
+  try {
+    const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ANTHROPIC_KEY,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1024,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: image } },
+            { type: 'text', text: `Extract all business card information from this image. Return ONLY a JSON object with these fields (use empty string if not found):\n{\n  name: contact person name,\n  company: company/business name,\n  phone: phone number,\n  email: email address,\n  address: street address,\n  city: city,\n  state: state abbreviation,\n  zip: zip code,\n  website: website URL,\n  category: best guess at business category/trade\n}\nReturn ONLY the JSON, no markdown, no explanation.` },
+          ],
+        }],
+      }),
+    });
+    const claudeData = await claudeRes.json();
+    if (!claudeRes.ok) return res.status(502).json({ error: 'AI analysis failed' });
+    const text = claudeData.content?.[0]?.text || '';
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(422).json({ error: 'Could not parse card data' });
+    res.json(JSON.parse(jsonMatch[0]));
+  } catch (e) {
+    console.error('[vendor-scan-card] error:', e.message);
+    res.status(500).json({ error: 'Business card scan failed' });
+  }
+});
+
+
+// POST /vendor/scan-and-match — scan business card, find or create vendor, link to this account
+router.post('/scan-and-match', requireVendorJwt, async (req, res) => {
+  const { image } = req.body || {};
+  if (!image) return res.status(400).json({ error: 'image (base64) required' });
+  const ANTHROPIC_KEY = process.env.ANTHROPIC_API_KEY;
+  if (!ANTHROPIC_KEY) return res.status(503).json({ error: 'ANTHROPIC_API_KEY not configured' });
+
+  // 1. Extract card info via Claude vision
+  let card;
+  try {
+    const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_KEY, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1024,
+        messages: [{ role: 'user', content: [
+          { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: image } },
+          { type: 'text', text: 'Extract all business card information. Return ONLY a JSON object: { name, company, phone, email, address, city, state, zip, website, category }. Use empty string for missing fields. Return ONLY the JSON.' }
+        ]}]
+      })
+    });
+    const cd = await claudeRes.json();
+    if (!claudeRes.ok) return res.status(502).json({ error: 'AI scan failed' });
+    const m = (cd.content?.[0]?.text || '').match(/\{[\s\S]*\}/);
+    if (!m) return res.status(422).json({ error: 'Could not parse card' });
+    card = JSON.parse(m[0]);
+  } catch(e) {
+    console.error('[scan-and-match] scan error:', e.message);
+    return res.status(500).json({ error: 'Scan failed' });
+  }
+
+  const userId = req.vendorUser.vendorUserId;
+  const client = await pool.connect();
+  try {
+    // 2. Search for existing vendor by email, phone, or company name
+    const phone = (card.phone || '').replace(/[^0-9+]/g, '');
+    const company = (card.company || '').trim();
+    const cardEmail = (card.email || '').toLowerCase().trim();
+
+    let match = null;
+    if (company || cardEmail || phone) {
+      const { rows } = await client.query(
+        `SELECT * FROM vendors WHERE
+           (canonical_name ILIKE $1 AND $1 != '')
+           OR (email = $2 AND $2 != '')
+           OR (primary_phone = $3 AND $3 != '')
+         LIMIT 1`,
+        [company, cardEmail, phone]
+      );
+      if (rows.length) match = rows[0];
+    }
+
+    if (match) {
+      // 3a. Found existing vendor — link this user to it
+      await client.query(
+        `UPDATE vendor_portal_users SET vendor_id = $1 WHERE user_id = $2`,
+        [match.vendor_id, userId]
+      );
+      return res.json({ matched: true, vendor: match, card });
+    }
+
+    // 3b. No match — create new vendor and link
+    const { randomUUID } = await import('crypto');
+    const newId = randomUUID();
+    const slugBase = (company || card.name || 'vendor').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-${'$'}/g, '').slice(0, 100);
+    const slug = slugBase + '-' + newId.slice(0, 8);
+
+    const catRes = await client.query(
+      `SELECT category_code FROM category_taxonomy WHERE category_name ILIKE $1 LIMIT 1`,
+      ['%' + (card.category || '') + '%']
+    );
+    const categoryCode = catRes.rows[0]?.category_code || (await client.query('SELECT category_code FROM category_taxonomy LIMIT 1')).rows[0]?.category_code;
+
+    const { rows: newVendorRows } = await client.query(
+      `INSERT INTO vendors (vendor_id, slug, canonical_name, email, primary_phone, website_url,
+         street_address, city, state, zip, primary_category_code,
+         is_active, is_claimed, is_licensed, is_insured, is_background_checked, is_onboarded, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,
+               true, false, false, false, false, true, NOW(), NOW())
+       RETURNING *`,
+      [newId, slug, company || card.name, cardEmail || null, phone || null,
+       card.website || null, card.address || null, card.city || null,
+       card.state || null, card.zip || null, categoryCode]
+    );
+    const newVendor = newVendorRows[0];
+
+    await client.query(
+      `UPDATE vendor_portal_users SET vendor_id = $1 WHERE user_id = $2`,
+      [newId, userId]
+    );
+
+    return res.json({ matched: false, vendor: newVendor, card });
+  } catch(e) {
+    console.error('[scan-and-match] db error:', e.message);
+    return res.status(500).json({ error: 'Server error during vendor match' });
+  } finally { client.release(); }
+});
+
+
+// POST /vendor/match-or-create — match card data to existing vendor or create new, link to account
+router.post('/match-or-create', requireVendorJwt, async (req, res) => {
+  const { name, company, phone, email, address, city, state, zip, website, category } = req.body || {};
+  const userId = req.vendorUser.vendorUserId;
+  const client = await pool.connect();
+  try {
+    const cleanPhone = (phone || '').replace(/[^0-9+]/g, '');
+    const cleanEmail = (email || '').toLowerCase().trim();
+    const cleanCompany = (company || '').trim();
+
+    // Search for existing vendor
+    let match = null;
+    if (cleanCompany || cleanEmail || cleanPhone) {
+      const { rows } = await client.query(
+        `SELECT * FROM vendors WHERE
+           (canonical_name ILIKE $1 AND $1 != '')
+           OR (email = $2 AND $2 != '')
+           OR (primary_phone = $3 AND $3 != '')
+         LIMIT 1`,
+        [cleanCompany, cleanEmail, cleanPhone]
+      );
+      if (rows.length) match = rows[0];
+    }
+
+    if (match) {
+      await client.query(
+        `UPDATE vendor_portal_users SET vendor_id = $1 WHERE user_id = $2`,
+        [match.vendor_id, userId]
+      );
+      // Onboard the matched vendor so they join the quoting flow
+      await client.query(
+        `UPDATE vendors SET is_onboarded = true, is_active = true, updated_at = NOW() WHERE vendor_id = $1`,
+        [match.vendor_id]
+      );
+      const { rows: updatedRows } = await client.query(`SELECT * FROM vendors WHERE vendor_id = $1`, [match.vendor_id]);
+      return res.json({ matched: true, vendor: updatedRows[0] });
+    }
+
+    // Create new vendor
+    const { randomUUID } = await import('crypto');
+    const newId = randomUUID();
+    const slugBase = (cleanCompany || name || 'vendor').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-${'$'}/g, '').slice(0, 80);
+    const slug = slugBase + '-' + newId.slice(0, 8);
+
+    const catRes = await client.query(
+      `SELECT category_code FROM category_taxonomy WHERE category_name ILIKE $1 LIMIT 1`,
+      ['%' + (category || '') + '%']
+    );
+    const categoryCode = catRes.rows[0]?.category_code
+      || (await client.query('SELECT category_code FROM category_taxonomy LIMIT 1')).rows[0]?.category_code;
+
+    const { rows: newRows } = await client.query(
+      `INSERT INTO vendors (vendor_id, slug, canonical_name, email, primary_phone, website_url,
+         street_address, city, state, zip, primary_category_code,
+         is_active, is_claimed, is_licensed, is_insured, is_background_checked, is_onboarded, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,
+               true,false,false,false,false,true,NOW(),NOW())
+       RETURNING *`,
+      [newId, slug, cleanCompany || name, cleanEmail || null, cleanPhone || null,
+       website || null, address || null, city || null, state || null, zip || null, categoryCode]
+    );
+
+    await client.query(
+      `UPDATE vendor_portal_users SET vendor_id = $1 WHERE user_id = $2`,
+      [newId, userId]
+    );
+
+    return res.json({ matched: false, vendor: newRows[0] });
+  } catch(e) {
+    console.error('[match-or-create] error:', e.message, e.code);
+    return res.status(500).json({ error: 'Server error: ' + e.message });
   } finally { client.release(); }
 });
 

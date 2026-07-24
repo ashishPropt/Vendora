@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vendora Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  body { background: #0f172a; }
+  .card-hover { transition: transform .15s, box-shadow .15s; }
+  .card-hover:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,.4); }
+</style>
+</head>
+<body class="min-h-screen text-slate-100 font-sans">
+
+<!-- HEADER -->
+<header class="border-b border-slate-700/50 bg-slate-800/60 backdrop-blur px-6 py-4">
+  <div class="max-w-5xl mx-auto flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <span class="text-2xl">🏗️</span>
+      <div>
+        <div class="font-bold text-white leading-tight">Vendora</div>
+        <div class="text-xs text-slate-400" id="role-badge">Admin Dashboard</div>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <span class="text-sm text-slate-400" id="user-name"></span>
+      <button onclick="doLogout()" class="text-xs text-slate-400 hover:text-red-400 border border-slate-600 hover:border-red-500 rounded-lg px-3 py-1.5 transition-colors">
+        Log out
+      </button>
+    </div>
+  </div>
+</header>
+
+<!-- BODY -->
+<main class="max-w-5xl mx-auto px-6 py-10">
+  <div id="welcome" class="mb-8">
+    <h1 class="text-3xl font-bold text-white" id="welcome-text">Welcome back</h1>
+    <p class="text-slate-400 mt-1" id="welcome-sub"></p>
+  </div>
+
+  <!-- ADMIN CARDS -->
+  <div id="admin-section" class="hidden">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+      <a href="/admin.html" class="card-hover block bg-blue-600 hover:bg-blue-500 rounded-2xl p-6 no-underline">
+        <div class="text-3xl mb-3">⚙️</div>
+        <div class="font-bold text-lg text-white">Admin Panel</div>
+        <div class="text-blue-100 text-sm mt-1">Vendors, calls, quote requests & settings</div>
+      </a>
+      <a href="/admin.html#vendors" class="card-hover block bg-slate-700 hover:bg-slate-600 rounded-2xl p-6 no-underline">
+        <div class="text-3xl mb-3">🏢</div>
+        <div class="font-bold text-lg text-white">Vendors</div>
+        <div class="text-slate-300 text-sm mt-1">Browse and manage vendor records</div>
+      </a>
+      <a href="/admin.html#calls" class="card-hover block bg-slate-700 hover:bg-slate-600 rounded-2xl p-6 no-underline">
+        <div class="text-3xl mb-3">📞</div>
+        <div class="font-bold text-lg text-white">Call History</div>
+        <div class="text-slate-300 text-sm mt-1">Review all outbound AI calls</div>
+      </a>
+      <a href="/admin.html#requests" class="card-hover block bg-slate-700 hover:bg-slate-600 rounded-2xl p-6 no-underline">
+        <div class="text-3xl mb-3">📋</div>
+        <div class="font-bold text-lg text-white">Quote Requests</div>
+        <div class="text-slate-300 text-sm mt-1">Track inbound job requests</div>
+      </a>
+      <a href="/developer.html" class="card-hover block bg-slate-700 hover:bg-slate-600 rounded-2xl p-6 no-underline">
+        <div class="text-3xl mb-3">🔌</div>
+        <div class="font-bold text-lg text-white">Developer API</div>
+        <div class="text-slate-300 text-sm mt-1">Integration docs & API keys</div>
+      </a>
+    </div>
+
+    <!-- RECENT CALLS -->
+    <div class="bg-slate-800 rounded-2xl p-6 border border-slate-700">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="font-bold text-white">Recent Calls</h2>
+        <a href="/admin.html#calls" class="text-xs text-blue-400 hover:underline">View all →</a>
+      </div>
+      <div id="recent-calls">
+        <div class="text-slate-500 text-sm text-center py-6">Loading…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NOT AUTHORIZED -->
+  <div id="unauth-section" class="hidden text-center py-20">
+    <div class="text-5xl mb-4">🔒</div>
+    <p class="text-slate-400">Session expired. <a href="/login.html" class="text-blue-400 hover:underline">Sign in again</a></p>
+  </div>
+</main>
+
+<script>
+const ADMIN_KEY = 'vendora_admin_token';
+
+function parseJwt(token) {
+  try {
+    return JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+  } catch { return null; }
+}
+
+function doLogout() {
+  localStorage.removeItem(ADMIN_KEY);
+  window.location.href = '/login.html';
+}
+
+async function loadRecentCalls() {
+  const token = localStorage.getItem(ADMIN_KEY);
+  try {
+    const res = await fetch('/admin/calls?limit=5', { headers: { Authorization: 'Bearer ' + token } });
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    const calls = data.calls || data || [];
+    const el = document.getElementById('recent-calls');
+    if (!calls.length) { el.innerHTML = '<p class="text-slate-500 text-sm text-center py-4">No calls yet</p>'; return; }
+    el.innerHTML = calls.slice(0, 5).map(c => `
+      <div class="flex items-center justify-between py-2 border-b border-slate-700 last:border-0">
+        <div>
+          <div class="text-sm font-medium text-white">${c.canonical_name || c.vendor_name || 'Unknown'}</div>
+          <div class="text-xs text-slate-400">${c.phone_dialed || ''} &middot; ${c.city || ''}</div>
+        </div>
+        <span class="text-xs px-2 py-0.5 rounded-full ${
+          c.outcome === 'INTERESTED' ? 'bg-green-900 text-green-300' :
+          c.outcome === 'NOT_INTERESTED' ? 'bg-red-900 text-red-300' :
+          c.outcome === 'BLOCKED' ? 'bg-orange-900 text-orange-300' :
+          'bg-slate-700 text-slate-300'
+        }">${c.outcome || c.status || 'Unknown'}</span>
+      </div>
+    `).join('');
+  } catch {
+    document.getElementById('recent-calls').innerHTML = '<p class="text-slate-500 text-sm text-center py-4">Could not load calls</p>';
+  }
+}
+
+(function init() {
+  const token = localStorage.getItem(ADMIN_KEY);
+  if (!token) { document.getElementById('unauth-section').classList.remove('hidden'); return; }
+
+  const payload = parseJwt(token);
+  if (!payload || payload.exp * 1000 < Date.now()) {
+    localStorage.removeItem(ADMIN_KEY);
+    document.getElementById('unauth-section').classList.remove('hidden');
+    return;
+  }
+
+  const name = payload.full_name || payload.email || 'Admin';
+  document.getElementById('user-name').textContent = name;
+  document.getElementById('welcome-text').textContent = 'Welcome, ' + (payload.full_name || 'Admin');
+  document.getElementById('welcome-sub').textContent = 'Vendora Admin Dashboard — ' + new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+  document.getElementById('admin-section').classList.remove('hidden');
+  loadRecentCalls();
+})();
+</script>
+</body>
+</html>

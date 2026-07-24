@@ -142,4 +142,51 @@ router.delete('/keys/:id', requireDevJwt, async (req, res) => {
   } finally { client.release(); }
 });
 
+// -- POST /dev/link-account
+// Admin or vendor presents their JWT; we find-or-create their developer account
+// and return a dev token so they can use the developer portal without a second signup.
+router.post('/link-account', async (req, res) => {
+  const auth = req.headers.authorization || '';
+  const token = auth.startsWith('Bearer ') ? auth.slice(7) : null;
+  if (!token) return res.status(401).json({ error: 'Bearer token required' });
+
+  // Accept admin JWT (role:admin) or vendor JWT (role:vendor)
+  const JWT_SECRET = process.env.JWT_SECRET || 'vendora-jwt-prod-2026-leaseloft';
+  let payload;
+  try { payload = jwt.verify(token, JWT_SECRET); } catch {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+  if (payload.role !== 'admin' && payload.role !== 'vendor') {
+    return res.status(403).json({ error: 'Admin or vendor token required' });
+  }
+
+  const email = payload.email;
+  const full_name = payload.full_name || payload.first_name || email.split('@')[0];
+  const client = await pool.connect();
+  try {
+    // Find or create developer account for this email
+    let { rows } = await client.query(
+      'SELECT dev_id, email, full_name FROM developer_accounts WHERE email = $1',
+      [email.toLowerCase()]
+    );
+    if (!rows.length) {
+      const hash = await bcrypt.hash(randomBytes(16).toString('hex'), 10);
+      const ins = await client.query(
+        `INSERT INTO developer_accounts (email, password_hash, full_name, company)
+         VALUES ($1, $2, $3, $4)
+         RETURNING dev_id, email, full_name`,
+        [email.toLowerCase(), hash, full_name, null]
+      );
+      rows = ins.rows;
+    }
+    const dev = rows[0];
+    const devToken = jwt.sign(
+      { dev_id: dev.dev_id, email: dev.email, full_name: dev.full_name, type: 'developer' },
+      DEV_SECRET(), { expiresIn: '7d' }
+    );
+    return res.json({ token: devToken, dev });
+  } finally { client.release(); }
+});
+
+
 export default router;

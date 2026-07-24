@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'fs';
+﻿import { existsSync, readFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -32,7 +32,7 @@ import devapiRoutes    from './routes/devapi.js';
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '15mb' })); // raised for base64 photo uploads (media-based issue detection)
 
 // ── Auth & API-key management (existing users / dashboard) ────────────────────
 app.use('/auth',       authRoutes);
@@ -82,12 +82,14 @@ app.post('/api/search', async (req, res) => {
     const vendorRes = await client.query(
       `SELECT v.vendor_id, v.canonical_name, v.primary_category_code,
               ct.display_name AS category_name, v.city, v.state,
+              v.service_states,
               v.primary_phone, v.website_url, v.email,
               v.vendor_score, v.score_tier, v.is_licensed, v.is_insured,
               v.is_background_checked, v.years_in_business, v.employee_count_range,
               v.service_radius_miles, v.bbb_accredited, v.bbb_rating, v.is_onboarded,
-              ROUND(AVG(vrs.avg_rating)::numeric,1) AS avg_rating,
-              SUM(vrs.review_count)::int             AS total_reviews,
+              v.hours_text, v.rating_source,
+              COALESCE(ROUND(AVG(vrs.avg_rating)::numeric,1), v.avg_rating) AS avg_rating,
+              COALESCE(SUM(vrs.review_count)::int, v.review_count)          AS review_count,
               vs.quality_score, vs.compliance_score, vs.reputation_score
        FROM vendors v
        LEFT JOIN category_taxonomy ct         ON ct.category_code = v.primary_category_code
@@ -96,10 +98,12 @@ app.post('/api/search', async (req, res) => {
        WHERE v.is_active = true
          AND (v.primary_category_code = ANY($1) OR v.secondary_category_codes && $1)
        GROUP BY v.vendor_id, v.canonical_name, v.primary_category_code, ct.display_name,
-                v.city, v.state, v.primary_phone, v.website_url, v.email,
+                v.city, v.state, v.service_states,
+                v.primary_phone, v.website_url, v.email,
                 v.vendor_score, v.score_tier, v.is_licensed, v.is_insured,
                 v.is_background_checked, v.years_in_business, v.employee_count_range,
                 v.service_radius_miles, v.bbb_accredited, v.bbb_rating, v.is_onboarded,
+                v.hours_text, v.rating_source, v.avg_rating, v.review_count,
                 vs.quality_score, vs.compliance_score, vs.reputation_score
        ORDER BY v.is_onboarded DESC, v.vendor_score DESC NULLS LAST`,
       [codes]

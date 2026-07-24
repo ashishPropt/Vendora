@@ -132,6 +132,14 @@
       Invite Requests
       <span id="requests-badge" class="hidden absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center"></span>
     </button>
+    <button id="tab-calls" onclick="switchTab('calls')"
+      class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors text-gray-500 hover:text-gray-700 relative">
+      Call History
+    </button>
+    <button id="tab-testvend" onclick="switchTab('testvend')"
+      class="px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors text-gray-500 hover:text-gray-700 relative">
+      Test Vendors
+    </button>
   </div>
 
   <!-- ── VENDORS TAB ──────────────────────────────────────────────────────────── -->
@@ -166,10 +174,18 @@
     </div>
     <div class="flex-none">
       <label class="block text-xs font-medium text-gray-700 mb-1">Status</label>
-      <select id="filter-onboarded" class="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white w-44">
-        <option value="false">Not yet onboarded</option>
-        <option value="true">Onboarded</option>
+      <select id="filter-status" class="border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white w-48">
         <option value="all">All vendors</option>
+        <option value="prospect">Prospective</option>
+        <option value="contacted">Contacted</option>
+        <option value="interested">Interested</option>
+        <option value="callback">Callback Scheduled</option>
+        <option value="declined">Declined</option>
+        <option value="unreachable">Unreachable</option>
+        <option value="invited">Invited</option>
+        <option value="onboarded">Onboarded</option>
+        <option value="test">Test Vendor</option>
+        <option value="inactive">Inactive</option>
       </select>
     </div>
     <button onclick="doSearch()"
@@ -359,6 +375,252 @@
 
   </div><!-- /pane-requests -->
 
+  <!-- ── TEST VENDORS TAB ─────────────────────────────────────────────────────── -->
+  <div id="pane-testvend" class="hidden fade-in">
+
+    <h2 class="font-bold text-gray-900 mb-1">Test Vendors</h2>
+    <p class="text-sm text-gray-500 mb-4">Search for a vendor to edit, or add a new one to use for voice testing.</p>
+
+    <!-- Search bar -->
+    <div class="bg-white rounded-xl border border-gray-200 p-4 mb-5">
+      <div class="flex gap-2">
+        <input id="tv-q" type="text" placeholder="Name, city, or phone number…"
+          class="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400"
+          onkeydown="if(event.key==='Enter') tvSearch()" />
+        <button onclick="tvSearch()" id="tv-search-btn"
+          class="flex-none bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg px-5 py-2 text-sm transition-colors flex items-center gap-2">
+          <svg id="tv-search-spinner" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          Search
+        </button>
+      </div>
+      <!-- Results list -->
+      <div id="tv-results" class="hidden mt-3 divide-y divide-gray-100 rounded-lg border border-gray-200 overflow-hidden"></div>
+      <div id="tv-no-results" class="hidden mt-3 text-sm text-gray-500 flex items-center justify-between">
+        <span>No match found.</span>
+        <button onclick="tvNewForm()"
+          class="text-indigo-600 text-sm font-semibold hover:underline flex items-center gap-1">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+          </svg>
+          Add new vendor
+        </button>
+      </div>
+    </div>
+
+    <!-- Vendor form -->
+    <div id="tv-form-wrap" class="hidden bg-white rounded-xl border border-gray-200 overflow-hidden mb-5">
+      <div class="bg-gray-50 border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+        <h3 id="tv-form-title" class="text-sm font-semibold text-gray-800">Vendor Details</h3>
+        <button onclick="tvClearForm()" class="text-xs text-gray-400 hover:text-gray-600">Clear</button>
+      </div>
+      <div class="p-4 space-y-4">
+        <input id="tv-vid" type="hidden"/>
+
+        <!-- Row 1: Name + Category -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-700 mb-1">Business Name <span class="text-red-500">*</span></label>
+            <input id="tv-name" type="text" placeholder="Joe's Plumbing LLC"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400"/>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-700 mb-1">Category <span class="text-red-500">*</span></label>
+            <select id="tv-category"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 bg-white">
+              <option value="">— select category —</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Row 2: Phone + Email -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-700 mb-1">Phone <span class="text-gray-400 font-normal">(for test calls)</span></label>
+            <input id="tv-phone" type="tel" placeholder="(973) 555-1234"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400"/>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-700 mb-1">Email</label>
+            <input id="tv-email" type="email" placeholder="owner@example.com"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400"/>
+          </div>
+        </div>
+
+        <!-- Row 3: City + State + Zip -->
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-medium text-gray-700 mb-1">City <span class="text-red-500">*</span></label>
+            <input id="tv-city" type="text" placeholder="Newark"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400"/>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-700 mb-1">State <span class="text-red-500">*</span></label>
+            <input id="tv-state" type="text" placeholder="NJ" maxlength="2"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 uppercase"/>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-700 mb-1">Zip</label>
+            <input id="tv-zip" type="text" placeholder="07102" maxlength="10"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400"/>
+          </div>
+        </div>
+
+        <!-- Row 4: Website + Credentials -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-700 mb-1">Website</label>
+            <input id="tv-website" type="url" placeholder="https://joesplumbing.com"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400"/>
+          </div>
+          <div class="flex items-end gap-6 pb-1 flex-wrap">
+            <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+              <input id="tv-licensed" type="checkbox" class="w-4 h-4 rounded border-gray-300 text-indigo-600"/>
+              Licensed
+            </label>
+            <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+              <input id="tv-insured" type="checkbox" class="w-4 h-4 rounded border-gray-300 text-indigo-600"/>
+              Insured
+            </label>
+            <label class="flex items-center gap-2 text-sm text-purple-700 cursor-pointer">
+              <input id="tv-istest" type="checkbox" class="w-4 h-4 rounded border-gray-300 text-purple-600"/>
+              Test vendor
+            </label>
+          </div>
+        </div>
+
+        <!-- Error + Save -->
+        <div id="tv-form-err" class="hidden text-red-600 text-sm bg-red-50 rounded-lg px-4 py-2.5"></div>
+        <div class="flex gap-3 pt-1">
+          <button onclick="tvSave()" id="tv-save-btn"
+            class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg py-2.5 text-sm transition-colors flex items-center justify-center gap-2">
+            <svg id="tv-save-spinner" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            Save Vendor
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Save success + test call -->
+    <div id="tv-saved-bar" class="hidden bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex flex-wrap items-center gap-3">
+      <svg class="w-5 h-5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+      </svg>
+      <div class="flex-1 min-w-0">
+        <span class="text-sm font-semibold text-emerald-800">Vendor saved!</span>
+        <span id="tv-saved-name" class="text-sm text-emerald-700 ml-2"></span>
+      </div>
+      <code id="tv-saved-id" class="text-xs bg-emerald-100 text-emerald-800 px-2 py-1 rounded font-mono truncate max-w-xs"></code>
+      <button onclick="tvCopyId()" id="tv-copy-id-btn"
+        class="text-xs font-semibold text-emerald-700 hover:underline">Copy ID</button>
+      <div id="tv-calltype-wrap" class="hidden flex-col gap-2 w-full mt-1">
+        <div class="flex gap-2">
+          <button id="tv-ctype-onboarding" onclick="tvSetCallType('onboarding')"
+            class="flex-1 text-xs font-semibold py-1.5 rounded-lg border transition-colors bg-emerald-600 text-white border-emerald-600">
+            Onboarding
+          </button>
+          <button id="tv-ctype-quote" onclick="tvSetCallType('quote')"
+            class="flex-1 text-xs font-semibold py-1.5 rounded-lg border transition-colors bg-white text-emerald-700 border-emerald-300 hover:bg-emerald-50">
+            Quote Request
+          </button>
+        </div>
+        <div id="tv-quote-wrap" class="hidden">
+          <textarea id="tv-quote-desc" rows="2" placeholder="e.g. Kitchen faucet leaking under the sink..."
+            class="w-full text-xs border border-emerald-200 rounded-lg px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-emerald-400 bg-white"></textarea>
+        </div>
+        <button onclick="tvMakeCall()" id="tv-call-btn"
+          class="w-full bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+          </svg>
+          Make Test Call
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /pane-testvend -->
+  <!-- ── CALL HISTORY PANE ──────────────────────────────────────────────────── -->
+  <div id="pane-calls" class="hidden fade-in">
+
+    <div class="bg-white rounded-xl border border-gray-200 p-4 mb-5 flex flex-wrap gap-3 items-end">
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Outcome</label>
+        <select id="ch-filter-outcome" onchange="loadCalls(1)"
+          class="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white w-44">
+          <option value="">All outcomes</option>
+          <option value="INTERESTED">Interested</option>
+          <option value="INTERESTED_EMAIL">Interested (email)</option>
+          <option value="INTERESTED_CALLBACK">Interested (callback)</option>
+          <option value="VOICEMAIL">Voicemail</option>
+          <option value="NO_ANSWER">No answer</option>
+          <option value="COMPLETED">Completed</option>
+          <option value="FAILED">Failed</option>
+          <option value="BLOCKED">Blocked/Spam</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Call type</label>
+        <select id="ch-filter-type" onchange="loadCalls(1)"
+          class="border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white w-44">
+          <option value="">All types</option>
+          <option value="quote-request">Quote request</option>
+          <option value="onboarding">Onboarding</option>
+          <option value="quote-request-test">Quote test</option>
+          <option value="onboarding-test">Onboarding test</option>
+        </select>
+      </div>
+      <div class="ml-auto">
+        <button onclick="loadCalls(1)"
+          class="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-4 py-2 text-sm font-semibold transition-colors">
+          Refresh
+        </button>
+      </div>
+    </div>
+
+    <div id="ch-loading" class="hidden text-center py-12 text-gray-400 text-sm">Loading calls...</div>
+    <div id="ch-empty"   class="hidden text-center py-12 text-gray-400 text-sm">No calls found.</div>
+    <div id="ch-error"   class="hidden text-center py-12 text-red-500 text-sm"></div>
+
+    <div id="ch-table-wrap" class="hidden bg-white rounded-xl border border-gray-200 overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Vendor</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Type</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Outcome</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Date</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Duration</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Summary</th>
+            <th class="px-4 py-3"></th>
+          </tr>
+        </thead>
+        <tbody id="ch-tbody" class="divide-y divide-gray-100"></tbody>
+      </table>
+    </div>
+
+    <div id="ch-pagination" class="hidden mt-4 flex items-center justify-between text-sm text-gray-500">
+      <span id="ch-page-info"></span>
+      <div class="flex gap-2">
+        <button id="ch-prev" onclick="loadCalls(chPage - 1)"
+          class="px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-medium">
+          Prev
+        </button>
+        <button id="ch-next" onclick="loadCalls(chPage + 1)"
+          class="px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-medium">
+          Next
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /pane-calls -->
+
+
 </div><!-- /view-app -->
 
 <script>
@@ -372,11 +634,31 @@ const PAGE_LIMIT   = 50;
 const vendorMap = {};
 
 // Active call state
-let activeCall = { callId: null, vendorId: null, pollTimer: null };
+let activeCall = { callId: null, vendorId: null, pollTimer: null, callType: 'onboarding', description: null };
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 function esc(s) {
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Vendor lifecycle status badges ──────────────────────────────────────────
+const STATUS_CFG = {
+  prospect:    { label: 'Prospective',        cls: 'bg-gray-100 text-gray-600',     dot: 'bg-gray-400'    },
+  contacted:   { label: 'Contacted',          cls: 'bg-sky-100 text-sky-700',       dot: 'bg-sky-500'     },
+  interested:  { label: 'Interested',         cls: 'bg-emerald-100 text-emerald-700', dot: 'bg-emerald-500' },
+  callback:    { label: 'Callback Scheduled', cls: 'bg-blue-100 text-blue-700',     dot: 'bg-blue-500'    },
+  declined:    { label: 'Declined',           cls: 'bg-rose-100 text-rose-600',     dot: 'bg-rose-400'    },
+  unreachable: { label: 'Unreachable',        cls: 'bg-amber-100 text-amber-700',   dot: 'bg-amber-400'   },
+  invited:     { label: 'Invited',            cls: 'bg-indigo-100 text-indigo-700', dot: 'bg-indigo-500'  },
+  onboarded:   { label: 'Onboarded',          cls: 'bg-green-100 text-green-700',   dot: 'bg-green-500'   },
+  test:        { label: 'Test Vendor',        cls: 'bg-purple-100 text-purple-700', dot: 'bg-purple-500'  },
+  inactive:    { label: 'Inactive',           cls: 'bg-gray-200 text-gray-500',     dot: 'bg-gray-400'    },
+};
+
+function statusBadge(status) {
+  const cfg = STATUS_CFG[status] || STATUS_CFG.prospect;
+  return `<span class="inline-flex items-center gap-1 text-[10px] font-semibold ${cfg.cls} rounded-full px-2 py-0.5 whitespace-nowrap">
+    <span class="w-1.5 h-1.5 rounded-full ${cfg.dot} inline-block"></span>${esc(cfg.label)}</span>`;
 }
 
 function apiFetch(path, opts) {
@@ -433,7 +715,7 @@ async function doSearch(page) {
   currentPage = page || 1;
   const state     = document.getElementById('filter-state').value;
   const search    = document.getElementById('filter-search').value.trim();
-  const onboarded = document.getElementById('filter-onboarded').value;
+  const status    = document.getElementById('filter-status').value;
 
   document.getElementById('results-loading').classList.remove('hidden');
   document.getElementById('results-table').classList.add('hidden');
@@ -443,9 +725,9 @@ async function doSearch(page) {
   document.getElementById('search-spinner').classList.remove('hidden');
 
   const params = new URLSearchParams({ page: currentPage, limit: PAGE_LIMIT });
-  if (state)                  params.set('state', state);
-  if (search)                 params.set('search', search);
-  if (onboarded !== 'all')    params.set('onboarded', onboarded);
+  if (state)               params.set('state', state);
+  if (search)              params.set('search', search);
+  if (status !== 'all')    params.set('status', status);
 
   try {
     const res  = await apiFetch('/admin/vendors?' + params);
@@ -471,6 +753,7 @@ function outcomeCfg(outcome) {
     NOT_NOW:    { dot: 'bg-gray-400',  label: 'Not now',       cls: 'bg-gray-100 text-gray-500'   },
     NO_ANSWER:  { dot: 'bg-gray-300',  label: 'No answer',     cls: 'bg-gray-100 text-gray-400'   },
     FAILED:     { dot: 'bg-red-400',   label: 'Failed',        cls: 'bg-red-100 text-red-500'     },
+    BLOCKED:    { dot: 'bg-orange-400', label: 'Blocked/Spam',  cls: 'bg-orange-100 text-orange-600' },
   };
   return map[outcome] || { dot: 'bg-gray-300', label: outcome || '—', cls: 'bg-gray-100 text-gray-400' };
 }
@@ -545,11 +828,7 @@ function renderVendors(vendors, total, page, limit) {
       <td class="px-5 py-3.5 text-gray-500 text-xs">${esc(location || '—')}</td>
       <td class="px-5 py-3.5 text-gray-500 text-xs">${esc(v.primary_phone || '—')}</td>
       <td class="px-5 py-3.5">
-        ${isOnboarded
-          ? '<span class="inline-flex items-center gap-1 text-[10px] font-semibold bg-green-100 text-green-700 rounded-full px-2 py-0.5">● Onboarded</span>'
-          : '<span class="inline-flex items-center gap-1 text-[10px] font-semibold bg-gray-100 text-gray-500 rounded-full px-2 py-0.5">○ Not onboarded</span>'
-        }
-        <div class="mt-0.5">${inviteStatus}</div>
+        ${statusBadge(v.lifecycle_status)}
         ${callBadgeHtml}
       </td>
       <td class="px-5 py-3.5">${outreachHtml}</td>`;
@@ -628,10 +907,12 @@ function copyInvite() {
 function dismissInvite() { document.getElementById('invite-banner').classList.add('hidden'); }
 
 // ── AI Call flow ──────────────────────────────────────────────────────────────
-function callVendor(vendorId) {
+function callVendor(vendorId, callType, description) {
   const v = vendorMap[vendorId];
   if (!v) return;
-  activeCall.vendorId = vendorId;
+  activeCall.vendorId    = vendorId;
+  activeCall.callType    = callType || 'onboarding';
+  activeCall.description = description || null;
   document.getElementById('modal-vendor-name').textContent  = v.canonical_name;
   document.getElementById('modal-vendor-phone').textContent = v.primary_phone || 'No phone on file';
   document.getElementById('modal-error').classList.add('hidden');
@@ -653,9 +934,13 @@ async function confirmCall() {
   spn.classList.remove('hidden');
 
   try {
-    const res  = await apiFetch('/admin/call-vendor', {
+    const endpoint = activeCall.callType === 'quote' ? '/admin/call-vendor-quote' : '/admin/call-vendor';
+    const body = activeCall.callType === 'quote'
+      ? { vendor_id: activeCall.vendorId, description: activeCall.description }
+      : { vendor_id: activeCall.vendorId };
+    const res  = await apiFetch(endpoint, {
       method: 'POST',
-      body:   JSON.stringify({ vendor_id: activeCall.vendorId }),
+      body:   JSON.stringify(body),
     });
     const data = await res.json();
 
@@ -686,6 +971,7 @@ const OUTCOME_BANNER = {
   NOT_NOW:    { bg: 'bg-gray-50 border-gray-200',   titleCls: 'text-gray-800',  subCls: 'text-gray-500',  iconBg: 'bg-gray-400',  emoji: '🚫' },
   NO_ANSWER:  { bg: 'bg-gray-50 border-gray-200',   titleCls: 'text-gray-700',  subCls: 'text-gray-400',  iconBg: 'bg-gray-300',  emoji: '📵' },
   FAILED:     { bg: 'bg-red-50 border-red-200',     titleCls: 'text-red-900',   subCls: 'text-red-600',   iconBg: 'bg-red-400',   emoji: '⚠️' },
+  BLOCKED:    { bg: 'bg-orange-50 border-orange-200', titleCls: 'text-orange-900', subCls: 'text-orange-700', iconBg: 'bg-orange-500', emoji: '🚫' },
 };
 
 function showCallBanner(phase, vendorName, call) {
@@ -792,7 +1078,7 @@ async function pollCallStatus(callId) {
 
 // ── Tab switching ─────────────────────────────────────────────────────────────
 function switchTab(tab) {
-  const tabs  = ['vendors', 'requests'];
+  const tabs  = ['vendors', 'requests', 'testvend', 'calls'];
   tabs.forEach(t => {
     const btn  = document.getElementById('tab-' + t);
     const pane = document.getElementById('pane-' + t);
@@ -803,6 +1089,8 @@ function switchTab(tab) {
     pane.classList.toggle('hidden', !active);
   });
   if (tab === 'requests') loadRequests();
+  if (tab === 'testvend') tvOnEnter();
+  if (tab === 'calls')    loadCalls(1);
 }
 
 // ── Invite Requests ───────────────────────────────────────────────────────────
@@ -909,6 +1197,457 @@ function copyReqInvite() {
     'Copy'
   );
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ── Test Vendors tab ───────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+
+let _tvCats   = [];
+let _tvVid    = '';
+let _tvLoaded = false;
+
+async function tvOnEnter() {
+  if (_tvLoaded) return;
+  try {
+    const r = await apiFetch('/admin/taxonomy');
+    const d = await r.json();
+    _tvCats = d.categories || [];
+    const sel = document.getElementById('tv-category');
+    sel.innerHTML = '<option value="">— select category —</option>';
+    _tvCats.forEach(c => {
+      const o = document.createElement('option');
+      o.value = c.category_code;
+      o.textContent = `${c.category_code} — ${c.display_name}`;
+      sel.appendChild(o);
+    });
+    _tvLoaded = true;
+  } catch (e) { /* taxonomy load failed — dropdown stays empty, non-fatal */ }
+}
+
+function tierClassTV(tier) {
+  const map = {
+    A: 'bg-emerald-100 text-emerald-700',
+    B: 'bg-blue-100 text-blue-700',
+    C: 'bg-amber-100 text-amber-700',
+    D: 'bg-gray-100 text-gray-600',
+  };
+  return map[tier] || 'bg-gray-100 text-gray-600';
+}
+
+async function tvSearch() {
+  const q = document.getElementById('tv-q').value.trim();
+  if (!q) return;
+  const btn = document.getElementById('tv-search-btn');
+  const spn = document.getElementById('tv-search-spinner');
+  btn.disabled = true; spn.classList.remove('hidden');
+
+  document.getElementById('tv-results').classList.add('hidden');
+  document.getElementById('tv-no-results').classList.add('hidden');
+  document.getElementById('tv-form-wrap').classList.add('hidden');
+  document.getElementById('tv-saved-bar').classList.add('hidden');
+
+  try {
+    const r = await apiFetch('/admin/vendors/lookup?q=' + encodeURIComponent(q));
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Search failed');
+
+    const results = document.getElementById('tv-results');
+    if (!d.vendors || !d.vendors.length) {
+      document.getElementById('tv-no-results').classList.remove('hidden');
+      return;
+    }
+    results.innerHTML = '';
+    d.vendors.forEach(v => {
+      const row = document.createElement('button');
+      row.className = 'w-full text-left px-4 py-3 hover:bg-indigo-50 transition-colors flex items-start justify-between gap-3';
+      const tier = v.score_tier ? `<span class="${tierClassTV(v.score_tier)} text-[10px] font-bold px-1.5 py-0.5 rounded-full">${esc(v.score_tier)}</span>` : '';
+      row.innerHTML = `
+        <div class="min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="font-semibold text-sm text-gray-900">${esc(v.canonical_name)}</span>
+            ${statusBadge(v.lifecycle_status)}
+            ${tier}
+          </div>
+          <div class="text-xs text-gray-500 mt-0.5 flex flex-wrap gap-x-3">
+            ${v.city ? `<span>${esc(v.city)}${v.state ? ', ' + esc(v.state) : ''}</span>` : ''}
+            ${v.primary_phone ? `<span>${esc(v.primary_phone)}</span>` : '<span class="text-amber-600">no phone</span>'}
+            ${v.category_display_name ? `<span class="text-indigo-600">${esc(v.category_display_name)}</span>` : ''}
+          </div>
+        </div>
+        <svg class="w-4 h-4 text-gray-400 shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+        </svg>`;
+      row.onclick = () => tvFillForm(v);
+      results.appendChild(row);
+    });
+
+    const footer = document.createElement('div');
+    footer.className = 'px-4 py-2.5 bg-gray-50 border-t border-gray-100 flex justify-end';
+    footer.innerHTML = `<button onclick="tvNewForm()" class="text-indigo-600 text-xs font-semibold hover:underline flex items-center gap-1">
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+      </svg>Add different vendor not in list</button>`;
+    results.appendChild(footer);
+    results.classList.remove('hidden');
+  } catch (e) {
+    document.getElementById('tv-no-results').classList.remove('hidden');
+    document.getElementById('tv-no-results').querySelector('span').textContent = 'Search error: ' + e.message;
+  } finally {
+    btn.disabled = false; spn.classList.add('hidden');
+  }
+}
+
+function tvFillForm(v) {
+  document.getElementById('tv-results').classList.add('hidden');
+  document.getElementById('tv-no-results').classList.add('hidden');
+  document.getElementById('tv-saved-bar').classList.add('hidden');
+  document.getElementById('tv-form-title').textContent = 'Edit Vendor — ' + v.canonical_name;
+  document.getElementById('tv-vid').value      = v.vendor_id  || '';
+  document.getElementById('tv-name').value     = v.canonical_name || '';
+  document.getElementById('tv-category').value = v.primary_category_code || '';
+  document.getElementById('tv-phone').value    = v.primary_phone || '';
+  document.getElementById('tv-email').value    = v.email || '';
+  document.getElementById('tv-city').value     = v.city  || '';
+  document.getElementById('tv-state').value    = (v.state || '').toUpperCase();
+  document.getElementById('tv-zip').value      = v.zip   || '';
+  document.getElementById('tv-website').value  = v.website_url || '';
+  document.getElementById('tv-licensed').checked = !!v.is_licensed;
+  document.getElementById('tv-insured').checked  = !!v.is_insured;
+  document.getElementById('tv-istest').checked   = !!v.is_test_vendor;
+  document.getElementById('tv-form-err').classList.add('hidden');
+  document.getElementById('tv-form-wrap').classList.remove('hidden');
+  document.getElementById('tv-form-wrap').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function tvNewForm() {
+  document.getElementById('tv-results').classList.add('hidden');
+  document.getElementById('tv-no-results').classList.add('hidden');
+  document.getElementById('tv-saved-bar').classList.add('hidden');
+  document.getElementById('tv-form-title').textContent = 'New Vendor';
+  ['tv-vid','tv-name','tv-phone','tv-email','tv-city','tv-state','tv-zip','tv-website'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('tv-category').value = '';
+  document.getElementById('tv-licensed').checked = false;
+  document.getElementById('tv-insured').checked  = false;
+  document.getElementById('tv-istest').checked   = true; // new vendors default to "Test vendor"
+  document.getElementById('tv-form-err').classList.add('hidden');
+  document.getElementById('tv-form-wrap').classList.remove('hidden');
+  document.getElementById('tv-form-wrap').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function tvClearForm() {
+  document.getElementById('tv-form-wrap').classList.add('hidden');
+  document.getElementById('tv-saved-bar').classList.add('hidden');
+}
+
+async function tvSave() {
+  const name     = document.getElementById('tv-name').value.trim();
+  const category = document.getElementById('tv-category').value;
+  const city     = document.getElementById('tv-city').value.trim();
+  const state    = document.getElementById('tv-state').value.trim().toUpperCase();
+  const errEl    = document.getElementById('tv-form-err');
+
+  if (!name || !category || !city || !state) {
+    errEl.textContent = 'Name, Category, City, and State are required.';
+    errEl.classList.remove('hidden'); return;
+  }
+  errEl.classList.add('hidden');
+
+  const btn = document.getElementById('tv-save-btn');
+  const spn = document.getElementById('tv-save-spinner');
+  btn.disabled = true; spn.classList.remove('hidden');
+
+  const body = {
+    vendor_id:             document.getElementById('tv-vid').value || undefined,
+    canonical_name:        name,
+    primary_category_code: category,
+    city, state,
+    zip:           document.getElementById('tv-zip').value.trim()     || null,
+    primary_phone: document.getElementById('tv-phone').value.trim()   || null,
+    email:         document.getElementById('tv-email').value.trim()   || null,
+    website_url:   document.getElementById('tv-website').value.trim() || null,
+    is_licensed:    document.getElementById('tv-licensed').checked,
+    is_insured:     document.getElementById('tv-insured').checked,
+    is_test_vendor: document.getElementById('tv-istest').checked,
+  };
+  if (!body.vendor_id) delete body.vendor_id;
+
+  try {
+    const r = await apiFetch('/admin/vendors/upsert', {
+      method: 'POST',
+      body:   JSON.stringify(body),
+    });
+    const d = await r.json();
+    if (!r.ok || d.error) throw new Error(d.error || 'Save failed');
+
+    _tvVid = d.vendor.vendor_id;
+    document.getElementById('tv-vid').value = _tvVid;
+    document.getElementById('tv-form-title').textContent = 'Edit Vendor — ' + d.vendor.canonical_name;
+    document.getElementById('tv-saved-name').innerHTML =
+      esc(d.vendor.canonical_name) + ' ' + statusBadge(d.vendor.lifecycle_status);
+    document.getElementById('tv-saved-id').textContent   = _tvVid;
+
+    // Register in vendorMap so the existing call modal can use it
+    vendorMap[_tvVid] = d.vendor;
+
+    const hasPhone = !!(d.vendor.primary_phone);
+    document.getElementById('tv-calltype-wrap').classList.toggle('hidden', !hasPhone);
+    if (hasPhone) document.getElementById('tv-calltype-wrap').style.display = hasPhone ? 'flex' : 'none';
+
+    document.getElementById('tv-saved-bar').classList.remove('hidden');
+    document.getElementById('tv-saved-bar').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } catch (e) {
+    errEl.textContent = e.message; errEl.classList.remove('hidden');
+  } finally {
+    btn.disabled = false; spn.classList.add('hidden');
+  }
+}
+
+function tvCopyId() {
+  copyText(_tvVid, document.getElementById('tv-copy-id-btn'), 'Copy ID');
+}
+
+var _tvCallType = 'onboarding';
+
+function tvSetCallType(type) {
+  _tvCallType = type;
+  const isQuote = type === 'quote';
+  document.getElementById('tv-quote-wrap').classList.toggle('hidden', !isQuote);
+  const activeClass   = 'flex-1 text-xs font-semibold py-1.5 rounded-lg border transition-colors bg-emerald-600 text-white border-emerald-600';
+  const inactiveClass = 'flex-1 text-xs font-semibold py-1.5 rounded-lg border transition-colors bg-white text-emerald-700 border-emerald-300 hover:bg-emerald-50';
+  document.getElementById('tv-ctype-onboarding').className = isQuote ? inactiveClass : activeClass;
+  document.getElementById('tv-ctype-quote').className      = isQuote ? activeClass   : inactiveClass;
+}
+
+function tvMakeCall() {
+  if (!_tvVid) return;
+  const desc = _tvCallType === 'quote'
+    ? (document.getElementById('tv-quote-desc').value.trim() || null)
+    : null;
+  callVendor(_tvVid, _tvCallType, desc);
+}
+
+function tvTestCall() { tvMakeCall(); }
+
+// ── Call History ─────────────────────────────────────────────────────────────
+var chPage = 1;
+var chTotal = 0;
+var CH_LIMIT = 25;
+
+var OUTCOME_COLORS = {
+  'INTERESTED':          'bg-green-100 text-green-800',
+  'INTERESTED_EMAIL':    'bg-green-100 text-green-800',
+  'INTERESTED_CALLBACK': 'bg-green-100 text-green-800',
+  'VOICEMAIL':           'bg-yellow-100 text-yellow-800',
+  'NO_ANSWER':           'bg-gray-100 text-gray-600',
+  'COMPLETED':           'bg-blue-100 text-blue-800',
+  'FAILED':              'bg-red-100 text-red-700',
+  'BLOCKED':             'bg-orange-100 text-orange-700'
+};
+
+var TYPE_LABELS = {
+  'quote-request':      'Quote',
+  'onboarding':         'Onboarding',
+  'quote-request-test': 'Quote (test)',
+  'onboarding-test':    'Onboarding (test)',
+  'admin-test':         'Admin test'
+};
+
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmtDuration(start, end) {
+  var s = Math.round((end - start) / 1000);
+  if (s < 60) return s + 's';
+  var m = Math.floor(s / 60), r = s % 60;
+  return m + 'm' + (r > 0 ? ' ' + r + 's' : '');
+}
+
+async function loadCalls(page) {
+  chPage = page || 1;
+  var outcome = document.getElementById('ch-filter-outcome').value;
+  var type    = document.getElementById('ch-filter-type').value;
+
+  document.getElementById('ch-loading').classList.remove('hidden');
+  document.getElementById('ch-table-wrap').classList.add('hidden');
+  document.getElementById('ch-pagination').classList.add('hidden');
+  document.getElementById('ch-empty').classList.add('hidden');
+  document.getElementById('ch-error').classList.add('hidden');
+
+  var params = new URLSearchParams({ page: chPage, limit: CH_LIMIT });
+  if (outcome) params.set('outcome', outcome);
+  if (type)    params.set('initiated_by', type);
+
+  try {
+    var res  = await fetch('/admin/calls?' + params, {
+      headers: { Authorization: 'Bearer ' + adminToken }
+    });
+    var data = await res.json();
+    document.getElementById('ch-loading').classList.add('hidden');
+    if (!res.ok) throw new Error(data.error || 'Load failed');
+
+    chTotal = data.total;
+    if (!data.calls.length) {
+      document.getElementById('ch-empty').classList.remove('hidden');
+      return;
+    }
+    renderCallRows(data.calls);
+    renderChPagination();
+  } catch(err) {
+    document.getElementById('ch-loading').classList.add('hidden');
+    var el = document.getElementById('ch-error');
+    el.textContent = 'Error: ' + err.message;
+    el.classList.remove('hidden');
+  }
+}
+
+function renderCallRows(calls) {
+  var tbody = document.getElementById('ch-tbody');
+  tbody.innerHTML = '';
+  for (var i = 0; i < calls.length; i++) {
+    var c = calls[i];
+    var vendorLabel = c.vendor_name
+      ? c.vendor_name + (c.city ? ', ' + c.city : '') + (c.state ? ' ' + c.state : '')
+      : (c.phone_dialed || 'Unknown');
+    var outcomeColor = OUTCOME_COLORS[c.outcome] || 'bg-gray-100 text-gray-600';
+    var typeLabel    = TYPE_LABELS[c.initiated_by] || c.initiated_by || 'Unknown';
+    var startedAt    = c.initiated_at ? new Date(c.initiated_at).toLocaleString() : 'Unknown';
+    var duration     = (c.initiated_at && c.ended_at)
+      ? fmtDuration(new Date(c.initiated_at), new Date(c.ended_at)) : '';
+    var summarySnip  = c.summary ? c.summary.slice(0, 80) + (c.summary.length > 80 ? '...' : '') : '';
+    var callId = c.call_id;
+
+    var tr = document.createElement('tr');
+    tr.className = 'hover:bg-gray-50 cursor-pointer';
+    tr.onclick = (function(id){ return function(){ openTranscript(id); }; })(callId);
+    tr.innerHTML =
+      '<td class="px-4 py-3 font-medium text-gray-900 max-w-xs truncate">' + escHtml(vendorLabel) + '</td>' +
+      '<td class="px-4 py-3 text-gray-500 whitespace-nowrap text-xs">' + escHtml(typeLabel) + '</td>' +
+      '<td class="px-4 py-3 whitespace-nowrap">' +
+        (c.outcome ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ' + outcomeColor + '">' + escHtml(c.outcome) + '</span>' : '<span class="text-gray-400 text-xs">' + escHtml(c.status || '') + '</span>') +
+      '</td>' +
+      '<td class="px-4 py-3 text-gray-500 whitespace-nowrap text-xs">' + escHtml(startedAt) + '</td>' +
+      '<td class="px-4 py-3 text-gray-500 whitespace-nowrap text-xs">' + escHtml(duration) + '</td>' +
+      '<td class="px-4 py-3 text-gray-400 max-w-xs truncate text-xs">' + escHtml(summarySnip) + '</td>' +
+      '<td class="px-4 py-3 text-right"><button class="text-indigo-600 hover:text-indigo-800 text-xs font-semibold hover:underline" onclick="event.stopPropagation();openTranscript(' + "'" + callId + "'" + ')">View</button></td>';
+    tbody.appendChild(tr);
+  }
+  document.getElementById('ch-table-wrap').classList.remove('hidden');
+}
+
+function renderChPagination() {
+  var totalPages = Math.ceil(chTotal / CH_LIMIT);
+  var el = document.getElementById('ch-pagination');
+  if (totalPages <= 1) { el.classList.add('hidden'); return; }
+  el.classList.remove('hidden');
+  document.getElementById('ch-page-info').textContent = 'Page ' + chPage + ' of ' + totalPages + ' (' + chTotal + ' total)';
+  document.getElementById('ch-prev').disabled = chPage <= 1;
+  document.getElementById('ch-next').disabled = chPage >= totalPages;
+}
+
+async function openTranscript(callId) {
+  document.getElementById('transcript-modal').classList.remove('hidden');
+  document.getElementById('tm-loading').classList.remove('hidden');
+  document.getElementById('tm-transcript').classList.add('hidden');
+  document.getElementById('tm-no-transcript').classList.add('hidden');
+  document.getElementById('tm-summary-wrap').classList.add('hidden');
+  document.getElementById('tm-title').textContent = 'Loading...';
+  document.getElementById('tm-meta').textContent  = '';
+  document.getElementById('tm-details').innerHTML = '';
+
+  try {
+    var res  = await fetch('/admin/calls/' + callId + '/transcript', {
+      headers: { Authorization: 'Bearer ' + adminToken }
+    });
+    var data = await res.json();
+    document.getElementById('tm-loading').classList.add('hidden');
+    if (!res.ok) throw new Error(data.error || 'Failed to load');
+
+    document.getElementById('tm-title').textContent = data.vendor_name || data.phone_dialed || 'Unknown vendor';
+
+    var date = data.initiated_at ? new Date(data.initiated_at).toLocaleString() : '';
+    var dur  = (data.initiated_at && data.ended_at)
+      ? fmtDuration(new Date(data.initiated_at), new Date(data.ended_at)) + ' call' : '';
+    document.getElementById('tm-meta').textContent = [date, dur].filter(Boolean).join(' · ');
+
+    if (data.summary) {
+      document.getElementById('tm-summary').textContent = data.summary;
+      document.getElementById('tm-summary-wrap').classList.remove('hidden');
+    }
+
+    var details = [];
+    if (data.outcome)        details.push(['Outcome', data.outcome]);
+    if (data.initiated_by)   details.push(['Type', TYPE_LABELS[data.initiated_by] || data.initiated_by]);
+    if (data.vendor_email)   details.push(['Email', data.vendor_email]);
+    if (data.phone_dialed)   details.push(['Phone', data.phone_dialed]);
+    if (data.quote_estimate) details.push(['Est. quote', data.quote_estimate]);
+    if (data.callback_time)  details.push(['Callback', data.callback_time]);
+    if (data.city || data.state) details.push(['Location', [data.city, data.state].filter(Boolean).join(', ')]);
+
+    document.getElementById('tm-details').innerHTML = details.map(function(p) {
+      return '<div><span class="font-semibold text-gray-700">' + escHtml(p[0]) + ':</span> ' + escHtml(p[1]) + '</div>';
+    }).join('');
+
+    if (data.transcript) {
+      var container = document.getElementById('tm-transcript');
+      container.innerHTML = formatTranscript(data.transcript);
+      container.classList.remove('hidden');
+    } else {
+      document.getElementById('tm-no-transcript').classList.remove('hidden');
+    }
+  } catch(err) {
+    document.getElementById('tm-loading').classList.add('hidden');
+    document.getElementById('tm-title').textContent = 'Error: ' + err.message;
+  }
+}
+
+function closeTranscript() {
+  document.getElementById('transcript-modal').classList.add('hidden');
+}
+
+function formatTranscript(raw) {
+  var lines = raw.split(/[\r\n]+/).filter(function(l){ return l.trim(); });
+  return lines.map(function(line) {
+    var botM = line.match(/^(AI|Assistant|Bot|Alex|Vendora)\s*:\s*/i);
+    var humM = line.match(/^(User|Vendor|Customer|Human|Caller)\s*:\s*/i);
+    if (botM) {
+      return '<div class="flex gap-3 py-1"><span class="shrink-0 font-semibold text-indigo-600 w-16 text-right text-xs pt-0.5">' + escHtml(botM[1]) + '</span><span class="text-gray-700">' + escHtml(line.slice(botM[0].length)) + '</span></div>';
+    } else if (humM) {
+      return '<div class="flex gap-3 py-1"><span class="shrink-0 font-semibold text-emerald-600 w-16 text-right text-xs pt-0.5">' + escHtml(humM[1]) + '</span><span class="text-gray-800 font-medium">' + escHtml(line.slice(humM[0].length)) + '</span></div>';
+    }
+    return '<div class="text-gray-400 py-1 pl-20 text-xs">' + escHtml(line) + '</div>';
+  }).join('');
+}
+
 </script>
+
+<!-- ── TRANSCRIPT MODAL ──────────────────────────────────────────────────────── -->
+<div id="transcript-modal" class="hidden fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4">
+  <div class="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-2xl max-h-[85vh] flex flex-col fade-in">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 shrink-0">
+      <div>
+        <h3 id="tm-title" class="font-bold text-gray-900 text-base"></h3>
+        <p  id="tm-meta"  class="text-xs text-gray-400 mt-0.5"></p>
+      </div>
+      <button onclick="closeTranscript()"
+        class="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 transition-colors">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    <div id="tm-summary-wrap" class="hidden px-6 py-3 bg-indigo-50 border-b border-indigo-100 text-sm text-indigo-800 shrink-0">
+      <span class="font-semibold">Summary: </span><span id="tm-summary"></span>
+    </div>
+    <div id="tm-details" class="px-6 py-3 border-b border-gray-100 flex flex-wrap gap-4 text-xs text-gray-500 shrink-0"></div>
+    <div class="overflow-y-auto flex-1 px-6 py-4">
+      <div id="tm-loading"       class="text-center py-8 text-gray-400 text-sm">Loading transcript...</div>
+      <div id="tm-no-transcript" class="hidden text-center py-8 text-gray-400 text-sm">No transcript available for this call.</div>
+      <div id="tm-transcript"    class="hidden space-y-1 text-sm leading-relaxed"></div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
